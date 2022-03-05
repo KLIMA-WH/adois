@@ -189,6 +189,8 @@ class TileGenerator:
         if (bounding_box[3] - bounding_box[1]) % self.image_size_meters:
             rows += 1
 
+        coordinates_list = []
+
         start_row = start_index // columns
         start_column = start_index % columns
 
@@ -202,17 +204,19 @@ class TileGenerator:
                                  f'{coordinates[0]}_{coordinates[1]}'
                     path = f'{os.path.join(self.dir_path, self.image_name_prefix, image_name)}.tiff'
                     self.export_tile(image=image, path=path, coordinates=coordinates)
+                    coordinates_list.append(coordinates)
                     start_index += 1
 
         if self.create_metadata_file:
             metadata = {'timestamp': str(DateTime.now().isoformat(sep=' ', timespec='seconds')),
+                        'wms_url': self.wms_url,
                         'resolution': self.resolution,
                         'image_size': self.image_size,
                         'bounding_box': bounding_box,
                         'number of columns': columns,
                         'number of rows': rows,
                         'number of images': columns * rows,
-                        'wms_url': self.wms_url}
+                        'list of coordinates': coordinates_list}
             with open(os.path.join(self.dir_path, f'{self.image_name_prefix}_metadata.json'), 'w') as file:
                 json.dump(metadata, file, indent=4)
 
