@@ -77,18 +77,18 @@ class TileGenerator:
         except FileExistsError:
             print(f'Directory {os.path.join(self.dir_path, self.image_name_prefix)} already exists!')
 
-    def get_tile(self, coordinates_tile):
+    def get_tile(self, coordinates):
         """Returns an image given its coordinates of the top left corner. If necessary, the image is getting masked
         with the shapes of the optional shape file.
 
-        :param (float, float) coordinates_tile: coordinates (x, y) of the top left corner
+        :param (float, float) coordinates: coordinates (x, y) of the top left corner
         :returns: image
         :rtype: np.ndarray of int
         """
-        bounding_box = (coordinates_tile[0],
-                        round(coordinates_tile[1] - self.image_size_meters, 2),
-                        round(coordinates_tile[0] + self.image_size_meters, 2),
-                        coordinates_tile[1])
+        bounding_box = (coordinates[0],
+                        round(coordinates[1] - self.image_size_meters, 2),
+                        round(coordinates[0] + self.image_size_meters, 2),
+                        coordinates[1])
         response = self.wms.getmap(layers=[self.layer],
                                    srs=f'EPSG:{self.epsg_code}',
                                    bbox=bounding_box,
@@ -98,8 +98,8 @@ class TileGenerator:
         image = np.rollaxis(np.array(Image.open(BytesIO(response.read()))), axis=2)
 
         if self.shapes is not None:
-            transform = rio.transform.from_origin(west=coordinates_tile[0],
-                                                  north=coordinates_tile[1],
+            transform = rio.transform.from_origin(west=coordinates[0],
+                                                  north=coordinates[1],
                                                   xsize=self.resolution,
                                                   ysize=self.resolution)
             with rio.io.MemoryFile() as memory_file:
@@ -123,20 +123,20 @@ class TileGenerator:
     def export_tile(self,
                     image,
                     path,
-                    coordinates_tile):
+                    coordinates):
         """Exports an image from the get_tile() method to the images directory. If necessary, a world file
         with georeferencing metadata is created in the same directory as the image itself or georeferencing metadata
         is embedded into the image.
 
         :param np.ndarray of int image: image
         :param str path: relative path to the image
-        :param (float, float) coordinates_tile: coordinates (x, y) of the top left corner
+        :param (float, float) coordinates: coordinates (x, y) of the top left corner
         :returns: None
         :rtype: None
         """
         if self.create_geotiff:
-            transform = rio.transform.from_origin(west=coordinates_tile[0],
-                                                  north=coordinates_tile[1],
+            transform = rio.transform.from_origin(west=coordinates[0],
+                                                  north=coordinates[1],
                                                   xsize=self.resolution,
                                                   ysize=self.resolution)
             with rio.open(path, 'w',
@@ -158,8 +158,8 @@ class TileGenerator:
                            '0.0\n'
                            '0.0\n'
                            f'-{self.resolution}\n'
-                           f'{coordinates_tile[0]}\n'
-                           f'{coordinates_tile[1]}')
+                           f'{coordinates[0]}\n'
+                           f'{coordinates[1]}')
 
     def export_tiles(self,
                      bounding_box,
@@ -194,14 +194,14 @@ class TileGenerator:
 
         for row in range(start_row, rows):
             for column in range(start_column, columns) if row == start_row else range(columns):
-                coordinates_tile = (round(bounding_box[0] + column * self.image_size_meters, 2),
-                                    round(bounding_box[1] + (row + 1) * self.image_size_meters, 2))
-                image = self.get_tile(coordinates_tile=coordinates_tile)
+                coordinates = (round(bounding_box[0] + column * self.image_size_meters, 2),
+                               round(bounding_box[1] + (row + 1) * self.image_size_meters, 2))
+                image = self.get_tile(coordinates=coordinates)
                 if image.any():
                     image_name = f'{self.image_name_prefix}_{start_index}_' \
-                                 f'{coordinates_tile[0]}_{coordinates_tile[1]}'
+                                 f'{coordinates[0]}_{coordinates[1]}'
                     path = f'{os.path.join(self.dir_path, self.image_name_prefix, image_name)}.tiff'
-                    self.export_tile(image=image, path=path, coordinates_tile=coordinates_tile)
+                    self.export_tile(image=image, path=path, coordinates=coordinates)
                     start_index += 1
 
         if self.create_metadata_file:
