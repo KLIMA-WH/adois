@@ -210,6 +210,8 @@ class TileGenerator:
         if self.create_metadata_file:
             metadata = {'timestamp': str(DateTime.now().isoformat(sep=' ', timespec='seconds')),
                         'wms_url': self.wms_url,
+                        'layer': self.layer,
+                        'epsg_code': self.epsg_code,
                         'resolution': self.resolution,
                         'image_size': self.image_size,
                         'bounding_box': bounding_box,
