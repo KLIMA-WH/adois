@@ -32,8 +32,7 @@ class TileGenerator:
                  image_name_prefix='',
                  shp_path=None,
                  create_world_file=False,
-                 create_geotiff=False,
-                 create_metadata_file=False):
+                 create_geotiff=False):
         """Constructor method
 
         :param str wms_url: url of the web map service
@@ -46,7 +45,6 @@ class TileGenerator:
         :param str or None shp_path: relative path to the shape file for masking specific areas
         :param bool create_world_file: if True, a world file is created
         :param bool create_geotiff: if True, georeferencing metadata is embedded into the image
-        :param bool create_metadata_file: if True, a metadata file is created
         :returns: None
         :rtype: None
         :raises ValueError: if image_size is not valid (not a power of base 2, its tenfold or too small/ large)
@@ -71,7 +69,6 @@ class TileGenerator:
             self.shapes = None
         self.create_world_file = create_world_file
         self.create_geotiff = create_geotiff
-        self.create_metadata_file = create_metadata_file
         try:
             os.mkdir(os.path.join(self.dir_path, self.image_name_prefix))
         except FileExistsError:
@@ -167,7 +164,6 @@ class TileGenerator:
         """Exports all images of an area given its bounding box to the images directory.
         Each image name consists of the following attributes separated by an underscore:
         'prefix_id_resolution_size_x_y.tiff'
-        If necessary, a metadata file is created.
 
         :param (float, float, float, float) bounding_box: bounding box (x_1, y_1, x_2, y_2)
             of the area from the bottom left corner to the top right corner
@@ -207,20 +203,19 @@ class TileGenerator:
                     coordinates_list.append(coordinates)
                     start_index += 1
 
-        if self.create_metadata_file:
-            metadata = {'timestamp': str(DateTime.now().isoformat(sep=' ', timespec='seconds')),
-                        'wms_url': self.wms_url,
-                        'layer': self.layer,
-                        'epsg_code': self.epsg_code,
-                        'resolution': self.resolution,
-                        'image_size': self.image_size,
-                        'bounding_box': bounding_box,
-                        'number of columns': columns,
-                        'number of rows': rows,
-                        'number of images': columns * rows,
-                        'list of coordinates': coordinates_list}
-            with open(os.path.join(self.dir_path, f'{self.image_name_prefix}_metadata.json'), 'w') as file:
-                json.dump(metadata, file, indent=4)
+        metadata = {'timestamp': str(DateTime.now().isoformat(sep=' ', timespec='seconds')),
+                    'wms_url': self.wms_url,
+                    'layer': self.layer,
+                    'epsg_code': self.epsg_code,
+                    'resolution': self.resolution,
+                    'image_size': self.image_size,
+                    'bounding_box': bounding_box,
+                    'number of columns': columns,
+                    'number of rows': rows,
+                    'number of images': columns * rows,
+                    'list of coordinates': coordinates_list}
+        with open(os.path.join(self.dir_path, f'{self.image_name_prefix}_metadata.json'), 'w') as file:
+            json.dump(metadata, file, indent=4)
 
     @staticmethod
     def print_info(wms_url):
