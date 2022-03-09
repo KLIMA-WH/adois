@@ -209,12 +209,12 @@ class TileGenerator:
                 index += 1
 
         metadata = {'timestamp': str(DateTime.now().isoformat(sep=' ', timespec='seconds')),
-                    'wms_url': self.wms_url,
+                    'wms url': self.wms_url,
                     'layer': self.layer,
-                    'epsg_code': self.epsg_code,
+                    'epsg code': self.epsg_code,
                     'resolution': self.resolution,
-                    'image_size': self.image_size,
-                    'bounding_box': bounding_box,
+                    'image size': self.image_size,
+                    'bounding box': bounding_box,
                     'number of columns': columns,
                     'number of rows': rows,
                     'number of iterations': iterations,
