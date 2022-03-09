@@ -21,6 +21,7 @@ class TileGenerator:
     """
     VALID_IMAGE_SIZE = (128, 256, 512, 1024, 2048, 4096, 1280, 2560, 5120)
     BANDS = 3
+    NON_ZERO_RATIO = 0.25
 
     def __init__(self,
                  wms_url,
@@ -185,17 +186,19 @@ class TileGenerator:
         if (bounding_box[3] - bounding_box[1]) % self.image_size_meters:
             rows += 1
 
-        coordinates_list = []
-
         start_row = start_index // columns
         start_column = start_index % columns
+
+        non_zero_threshold = self.image_size ** 2 * TileGenerator.BANDS * TileGenerator.NON_ZERO_RATIO
+
+        coordinates_list = []
 
         for row in range(start_row, rows):
             for column in range(start_column, columns) if row == start_row else range(columns):
                 coordinates = (round(bounding_box[0] + column * self.image_size_meters, 2),
                                round(bounding_box[1] + (row + 1) * self.image_size_meters, 2))
                 image = self.get_tile(coordinates=coordinates)
-                if image.any():
+                if np.count_nonzero(image) > non_zero_threshold:
                     image_name = f'{self.image_name_prefix}_{start_index}_' \
                                  f'{coordinates[0]}_{coordinates[1]}'
                     path = f'{os.path.join(self.dir_path, self.image_name_prefix, image_name)}.tiff'
