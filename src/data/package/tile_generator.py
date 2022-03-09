@@ -10,7 +10,7 @@ import rasterio as rio
 import rasterio.mask
 import warnings
 
-warnings.filterwarnings('ignore', message='shapes are outside bounds of raster.')
+warnings.filterwarnings(action='ignore', message='shapes are outside bounds of raster.')
 
 
 class TileGenerator:
