@@ -161,16 +161,16 @@ class TileGenerator:
 
     def export_tiles(self,
                      bounding_box,
-                     start_index=0):
+                     index=0,
+                     image_id=0):
         """Exports all images of an area given its bounding box to the images directory.
         Each image name consists of the following attributes separated by an underscore:
         'prefix_id_resolution_size_x_y.tiff'
 
         :param (float, float, float, float) bounding_box: bounding box (x_1, y_1, x_2, y_2)
             of the area from the bottom left corner to the top right corner
-        :param int start_index: if the connection to the web map service is lost during the export_tiles() method,
-            change the start_index to the next id according to the last successfully downloaded image
-            and rerun it manually
+        :param int index: initial index of the iteration through the images
+        :param int image_id: initial value of the image ids
         :returns: None
         :rtype: None
         :raises ValueError: if bounding_box is not valid (x_1 > x_2 or y_1 > y_2)
@@ -185,26 +185,28 @@ class TileGenerator:
         rows = int((bounding_box[3] - bounding_box[1]) // self.image_size_meters)
         if (bounding_box[3] - bounding_box[1]) % self.image_size_meters:
             rows += 1
+        iterations = columns * rows
 
-        start_row = start_index // columns
-        start_column = start_index % columns
+        initial_row = index // columns
+        initial_column = index % columns
 
         non_zero_threshold = self.image_size ** 2 * TileGenerator.BANDS * TileGenerator.NON_ZERO_RATIO
 
         coordinates_list = []
 
-        for row in range(start_row, rows):
-            for column in range(start_column, columns) if row == start_row else range(columns):
+        for row in range(initial_row, rows):
+            for column in range(initial_column, columns) if row == initial_row else range(columns):
                 coordinates = (round(bounding_box[0] + column * self.image_size_meters, 2),
                                round(bounding_box[1] + (row + 1) * self.image_size_meters, 2))
                 image = self.get_tile(coordinates=coordinates)
                 if np.count_nonzero(image) > non_zero_threshold:
-                    image_name = f'{self.image_name_prefix}_{start_index}_' \
+                    image_name = f'{self.image_name_prefix}_{image_id}_' \
                                  f'{coordinates[0]}_{coordinates[1]}'
                     path = f'{os.path.join(self.dir_path, self.image_name_prefix, image_name)}.tiff'
                     self.export_tile(image=image, path=path, coordinates=coordinates)
                     coordinates_list.append(coordinates)
-                    start_index += 1
+                    image_id += 1
+                index += 1
 
         metadata = {'timestamp': str(DateTime.now().isoformat(sep=' ', timespec='seconds')),
                     'wms_url': self.wms_url,
@@ -215,7 +217,7 @@ class TileGenerator:
                     'bounding_box': bounding_box,
                     'number of columns': columns,
                     'number of rows': rows,
-                    'number of images': columns * rows,
+                    'number of iterations': iterations,
                     'list of coordinates': coordinates_list}
         with open(os.path.join(self.dir_path, f'{self.image_name_prefix}_metadata.json'), 'w') as file:
             json.dump(metadata, file, indent=4)
