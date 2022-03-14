@@ -2,6 +2,7 @@ from datetime import datetime as DateTime  # PEP 8 compliant
 import geopandas as gpd
 from io import BytesIO
 import json
+import logging
 import numpy as np
 import os
 from owslib.wms import WebMapService
@@ -9,6 +10,17 @@ from PIL import Image
 import rasterio as rio
 import rasterio.mask
 import warnings
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+logger_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s: %(message)s')
+
+file_handler = logging.FileHandler(filename=f'{__name__}.log', mode='w')
+file_handler.setFormatter(logger_formatter)
+logger.addHandler(file_handler)
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(logger_formatter)
+logger.addHandler(console_handler)
 
 warnings.filterwarnings(action='ignore', message='shapes are outside bounds of raster.')
 
@@ -186,6 +198,7 @@ class TileGenerator:
         if (bounding_box[3] - bounding_box[1]) % self.image_size_meters:
             rows += 1
         iterations = columns * rows
+        padding_length = len(str(iterations))
 
         initial_row = index // columns
         initial_column = index % columns
@@ -205,7 +218,12 @@ class TileGenerator:
                     path = f'{os.path.join(self.dir_path, self.image_name_prefix, image_name)}.tiff'
                     self.export_tile(image=image, path=path, coordinates=coordinates)
                     coordinates_list.append(coordinates)
+                    logger.info(f'iteration {index + 1:>{padding_length}} / {iterations} '
+                                f'-> image with id = {image_id} exported')
                     image_id += 1
+                else:
+                    logger.info(f'iteration {index + 1:>{padding_length}} / {iterations} '
+                                f'-> image skipped')
                 index += 1
 
         metadata = {'timestamp': str(DateTime.now().isoformat(sep=' ', timespec='seconds')),
