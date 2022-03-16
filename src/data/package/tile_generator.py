@@ -134,9 +134,8 @@ class TileGenerator:
                     image,
                     path,
                     coordinates):
-        """Exports an image from the get_tile() method to the images directory. If necessary, a world file
-        with georeferencing metadata is created in the same directory as the image itself or georeferencing metadata
-        is embedded into the image.
+        """Exports an image from the get_tile(). If necessary, a world file with georeferencing metadata
+        is created in the same directory as the image itself or georeferencing metadata is embedded into the image.
 
         :param np.ndarray of int image: image
         :param str path: relative path to the image
@@ -177,7 +176,7 @@ class TileGenerator:
                      image_id=0):
         """Exports all images of an area given its bounding box to the images directory.
         Each image name consists of the following attributes separated by an underscore:
-        'prefix_id_resolution_size_x_y.tiff'
+        'prefix_id_x_y.tiff'
 
         :param (float, float, float, float) bounding_box: bounding box (x_1, y_1, x_2, y_2)
             of the area from the bottom left corner to the top right corner
@@ -216,7 +215,9 @@ class TileGenerator:
                     image_name = f'{self.image_name_prefix}_{image_id}_' \
                                  f'{coordinates[0]}_{coordinates[1]}'
                     path = f'{os.path.join(self.dir_path, self.image_name_prefix, image_name)}.tiff'
-                    self.export_tile(image=image, path=path, coordinates=coordinates)
+                    self.export_tile(image=image,
+                                     path=path,
+                                     coordinates=coordinates)
                     coordinates_list.append(coordinates)
                     logger.info(f'iteration {index + 1:>{padding_length}} / {iterations} '
                                 f'-> image with id = {image_id} exported')
