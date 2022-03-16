@@ -44,7 +44,7 @@ class TileGenerator:
                  dir_path='',
                  image_name_prefix='',
                  shp_path=None,
-                 create_world_file=False,
+                 create_wld=False,
                  create_geotiff=False):
         """Constructor method
 
@@ -56,7 +56,7 @@ class TileGenerator:
         :param str dir_path: relative path to the directory
         :param str image_name_prefix: prefix of the image name
         :param str or None shp_path: relative path to the shape file for masking specific areas
-        :param bool create_world_file: if True, a world file is created
+        :param bool create_wld: if True, a world file is created
         :param bool create_geotiff: if True, georeferencing metadata is embedded into the image
         :returns: None
         :rtype: None
@@ -80,7 +80,7 @@ class TileGenerator:
             self.shapes = list((row.geometry for _, row in shapes.iterrows()))
         else:
             self.shapes = None
-        self.create_world_file = create_world_file
+        self.create_wld = create_wld
         self.create_geotiff = create_geotiff
         try:
             os.mkdir(os.path.join(self.dir_path, self.image_name_prefix))
@@ -162,7 +162,7 @@ class TileGenerator:
         else:
             Image.fromarray(image).save(path)
 
-        if self.create_world_file:
+        if self.create_wld:
             with open(f'{os.path.splitext(path)[0]}.wld', 'w') as file:
                 file.write(f'{self.resolution}\n'
                            '0.0\n'
