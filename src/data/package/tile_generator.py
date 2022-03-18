@@ -71,11 +71,11 @@ class TileGenerator:
         self.layer = layer
         self.epsg_code = epsg_code
         self.resolution = resolution
-        if image_size not in TileGenerator.VALID_IMAGE_SIZE:
+        if image_size in TileGenerator.VALID_IMAGE_SIZE:
+            self.image_size = image_size
+        else:
             raise ValueError('Invalid image_size! image_size has to be a power of base 2 or its tenfold. Try '
                              f'{[*TileGenerator.VALID_IMAGE_SIZE]}.')
-        else:
-            self.image_size = image_size
         self.image_size_meters = self.resolution * self.image_size
         self.dir_path = dir_path
         self.image_name_prefix = image_name_prefix
