@@ -33,7 +33,6 @@ class TileGenerator:
     """
     VALID_IMAGE_SIZE = (128, 256, 512, 1024, 2048, 4096, 1280, 2560, 5120)
     BANDS = 3
-    NON_ZERO_RATIO = 0.25
 
     def __init__(self,
                  wms_url,
@@ -45,7 +44,8 @@ class TileGenerator:
                  image_name_prefix='',
                  shp_path=None,
                  create_wld=False,
-                 create_geotiff=False):
+                 create_geotiff=False,
+                 non_zero_ratio=.25):
         """Constructor method
 
         :param str wms_url: url of the web map service
@@ -58,9 +58,13 @@ class TileGenerator:
         :param str or None shp_path: relative path to the shape file for masking specific areas
         :param bool create_wld: if True, a world file is created
         :param bool create_geotiff: if True, georeferencing metadata is embedded into the image
+        :param float non_zero_ratio: ratio of pixels with information (pixel value > 0) to all pixels of the image
+            (export filter: if the pixels with information are below the threshold of the non_zero_ratio,
+            the image is skipped)
         :returns: None
         :rtype: None
-        :raises ValueError: if image_size is not valid (not a power of base 2, its tenfold or too small/ large)
+        :raises ValueError: if image_size is not valid (not a power of base 2, its tenfold or too small/ large) or
+            if non_zero_ratio is not valid (not a value between 0 and 1)
         """
         self.wms_url = wms_url
         self.wms = WebMapService(self.wms_url)
@@ -82,6 +86,10 @@ class TileGenerator:
             self.shapes = None
         self.create_wld = create_wld
         self.create_geotiff = create_geotiff
+        if 0 <= non_zero_ratio <= 1:
+            self.non_zero_ratio = non_zero_ratio
+        else:
+            raise ValueError('Invalid non_zero_ratio! non_zero_ratio has to be a value between 0 and 1.')
         try:
             os.mkdir(os.path.join(self.dir_path, self.image_name_prefix))
         except FileExistsError:
@@ -202,7 +210,7 @@ class TileGenerator:
         initial_row = index // columns
         initial_column = index % columns
 
-        non_zero_threshold = self.image_size ** 2 * TileGenerator.BANDS * TileGenerator.NON_ZERO_RATIO
+        non_zero_threshold = self.image_size ** 2 * TileGenerator.BANDS * self.non_zero_ratio
 
         coordinates_list = []
 
@@ -211,7 +219,7 @@ class TileGenerator:
                 coordinates = (round(bounding_box[0] + column * self.image_size_meters, 2),
                                round(bounding_box[1] + (row + 1) * self.image_size_meters, 2))
                 image = self.get_tile(coordinates=coordinates)
-                if np.count_nonzero(image) > non_zero_threshold:
+                if np.any(image) if self.non_zero_ratio == 0 else np.count_nonzero(image) > non_zero_threshold:
                     image_name = f'{self.image_name_prefix}_{image_id}_' \
                                  f'{coordinates[0]}_{coordinates[1]}'
                     path = f'{os.path.join(self.dir_path, self.image_name_prefix, image_name)}.tiff'
