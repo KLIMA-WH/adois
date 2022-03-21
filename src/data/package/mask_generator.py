@@ -1,6 +1,7 @@
 from datetime import datetime as DateTime  # PEP 8 compliant
 import geopandas as gpd
 import json
+import logging
 import numpy as np
 import os
 from PIL import Image
@@ -8,11 +9,21 @@ import rasterio as rio
 import rasterio.features
 import rasterio.mask
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+logger_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s: %(message)s')
+
+file_handler = logging.FileHandler(filename=f'{__name__}.log', mode='w')
+file_handler.setFormatter(logger_formatter)
+logger.addHandler(file_handler)
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(logger_formatter)
+logger.addHandler(console_handler)
+
 
 class MaskGenerator:
     """MaskGenerator
     TODO: class documentation
-    TODO: logging
 
     Author: Marius Maryniak (marius.maryniak@w-hs.de)
     """
@@ -161,7 +172,10 @@ class MaskGenerator:
         """
         image_name_prefix = '_'.join(os.path.splitext(self.metadata_path)[0].split('/')[-1].split('_')[:-1])
         tiles_dir_path = os.path.join(self.dir_path, image_name_prefix)
-        for file in os.listdir(tiles_dir_path):
+        tiles_dir_path_list = os.listdir(tiles_dir_path)
+        iterations = len(tiles_dir_path_list)
+        logger_padding_length = len(str(len(tiles_dir_path_list)))
+        for index, file in enumerate(tiles_dir_path_list):
             if str(file).endswith('.tiff'):
                 mask, coordinates = self.get_mask(path=str(os.path.join(tiles_dir_path, file)))
                 image_name = str(os.path.splitext(file)[0])
@@ -170,6 +184,8 @@ class MaskGenerator:
                 self.export_mask(image=mask,
                                  path=path,
                                  coordinates=coordinates)
+                logger.info(f'iteration {index + 1:>{logger_padding_length}} / {iterations} '
+                            f'-> mask with id = {index} exported')
 
         metadata = {'timestamp': str(DateTime.now().isoformat(sep=' ', timespec='seconds')),
                     'epsg code': self.epsg_code,
