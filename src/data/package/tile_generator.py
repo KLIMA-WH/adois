@@ -205,7 +205,7 @@ class TileGenerator:
         if (bounding_box[3] - bounding_box[1]) % self.image_size_meters:
             rows += 1
         iterations = columns * rows
-        padding_length = len(str(iterations))
+        logger_padding_length = len(str(iterations))
 
         initial_row = index // columns
         initial_column = index % columns
@@ -227,11 +227,11 @@ class TileGenerator:
                                      path=path,
                                      coordinates=coordinates)
                     coordinates_list.append(coordinates)
-                    logger.info(f'iteration {index + 1:>{padding_length}} / {iterations} '
+                    logger.info(f'iteration {index + 1:>{logger_padding_length}} / {iterations} '
                                 f'-> image with id = {image_id} exported')
                     image_id += 1
                 else:
-                    logger.info(f'iteration {index + 1:>{padding_length}} / {iterations} '
+                    logger.info(f'iteration {index + 1:>{logger_padding_length}} / {iterations} '
                                 f'-> image skipped')
                 index += 1
 
