@@ -195,7 +195,6 @@ class MaskGenerator:
                     'bounding box': self.metadata.get('bounding box'),
                     'number of columns': self.metadata.get('number of columns'),
                     'number of rows': self.metadata.get('number of rows'),
-                    'number of iterations': self.metadata.get('number of iterations'),
-                    'list of coordinates': self.metadata.get('list of coordinates')}
+                    'number of iterations': self.metadata.get('number of iterations')}
         with open(os.path.join(self.dir_path, 'mask_metadata.json'), 'w') as file:
             json.dump(metadata, file, indent=4)

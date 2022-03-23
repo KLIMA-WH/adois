@@ -212,8 +212,6 @@ class TileGenerator:
 
         non_zero_threshold = self.image_size ** 2 * TileGenerator.BANDS * self.non_zero_ratio
 
-        coordinates_list = []
-
         for row in range(initial_row, rows):
             for column in range(initial_column, columns) if row == initial_row else range(columns):
                 coordinates = (round(bounding_box[0] + column * self.image_size_meters, 2),
@@ -226,7 +224,6 @@ class TileGenerator:
                     self.export_tile(image=image,
                                      path=path,
                                      coordinates=coordinates)
-                    coordinates_list.append(coordinates)
                     logger.info(f'iteration {index + 1:>{logger_padding_length}} / {iterations} '
                                 f'-> image with id = {image_id} exported')
                     image_id += 1
@@ -244,8 +241,7 @@ class TileGenerator:
                     'bounding box': bounding_box,
                     'number of columns': columns,
                     'number of rows': rows,
-                    'number of iterations': iterations,
-                    'list of coordinates': coordinates_list}
+                    'number of iterations': iterations}
         with open(os.path.join(self.dir_path, f'{self.image_name_prefix}_metadata.json'), 'w') as file:
             json.dump(metadata, file, indent=4)
 
