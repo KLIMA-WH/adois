@@ -2,6 +2,7 @@ from datetime import datetime as DateTime  # PEP 8 compliant
 import geopandas as gpd
 import json
 import logging
+from natsort import natsorted
 import numpy as np
 import os
 from PIL import Image
@@ -172,7 +173,7 @@ class MaskGenerator:
         """
         image_name_prefix = '_'.join(os.path.splitext(self.metadata_path)[0].split('/')[-1].split('_')[:-1])
         tiles_dir_path = os.path.join(self.dir_path, image_name_prefix)
-        tiles_dir_path_list = os.listdir(tiles_dir_path)
+        tiles_dir_path_list = natsorted(os.listdir(tiles_dir_path))
         iterations = len(tiles_dir_path_list)
         logger_padding_length = len(str(len(tiles_dir_path_list)))
         for index, file in enumerate(tiles_dir_path_list):
