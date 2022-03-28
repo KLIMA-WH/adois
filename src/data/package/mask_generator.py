@@ -28,7 +28,7 @@ class MaskGenerator:
 
     Author: Marius Maryniak (marius.maryniak@w-hs.de)
     """
-    SINGLE_CLASS_MASK_VALUE = 255
+    SINGLE_CLASS_MASK_VALUE = 1
     BANDS = 1
 
     def __init__(self,
