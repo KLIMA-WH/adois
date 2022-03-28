@@ -102,7 +102,7 @@ class MaskGenerator:
                                           transform=transform)
         except ValueError:
             mask = np.zeros(shape=(self.image_size, self.image_size))
-        mask = np.rollaxis(np.expand_dims(mask, axis=2), axis=2)
+        mask = np.rollaxis(np.expand_dims(mask, axis=-1), axis=-1)
 
         if self.shapes is not None:
             with rio.io.MemoryFile() as memory_file:
