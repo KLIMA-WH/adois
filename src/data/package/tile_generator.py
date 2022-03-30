@@ -142,7 +142,7 @@ class TileGenerator:
                     image,
                     path,
                     coordinates):
-        """Exports an image from the get_tile(). If necessary, a world file with georeferencing metadata
+        """Exports an image from the get_tile() method. If necessary, a world file with georeferencing metadata
         is created in the same directory as the image itself or georeferencing metadata is embedded into the image.
 
         :param np.ndarray of int image: image
