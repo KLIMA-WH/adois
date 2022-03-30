@@ -45,7 +45,7 @@ class RecordGenerator:
                              'a value of 2 or 3.')
 
     @staticmethod
-    def tensor_feature(tensor):
+    def get_tensor_feature(tensor):
         """Returns a feature.
 
         :param tf.Tensor tensor: tensor
@@ -67,8 +67,8 @@ class RecordGenerator:
         :rtype: tf.train.Example
         """
         image = RecordGenerator.concatenate_to_rgbi(rgb_image=rgb_image, nir_image=nir_image)
-        feature = {'image': RecordGenerator.tensor_feature(tf.cast(image, tf.uint8)),
-                   'mask': RecordGenerator.tensor_feature(tf.cast(mask, tf.uint8))}
+        feature = {'image': RecordGenerator.get_tensor_feature(tf.cast(image, tf.uint8)),
+                   'mask': RecordGenerator.get_tensor_feature(tf.cast(mask, tf.uint8))}
         return tf.train.Example(features=tf.train.Features(feature=feature))
 
     @staticmethod
