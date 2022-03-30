@@ -178,10 +178,10 @@ class TileGenerator:
                            f'{coordinates[0]}\n'
                            f'{coordinates[1]}')
 
-    def export_tiles(self,
-                     bounding_box,
-                     index=0,
-                     image_id=0):
+    def __call__(self,
+                 bounding_box,
+                 index=0,
+                 image_id=0):
         """Exports all images of an area given its bounding box to the images directory.
         Each image name consists of the following attributes separated by an underscore:
         'prefix_id_x_y.tiff'

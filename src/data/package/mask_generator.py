@@ -163,7 +163,7 @@ class MaskGenerator:
                            f'{coordinates[0]}\n'
                            f'{coordinates[1]}')
 
-    def export_masks(self):
+    def __call__(self):
         """Exports all images of an area to the masks directory.
         Each image name consists of the following attributes separated by an underscore:
         'mask_id_x_y.tiff'
