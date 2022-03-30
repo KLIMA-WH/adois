@@ -173,10 +173,10 @@ class MaskGenerator:
         """
         image_name_prefix = '_'.join(os.path.splitext(self.metadata_path)[0].split('/')[-1].split('_')[:-1])
         tiles_dir_path = os.path.join(self.dir_path, image_name_prefix)
-        tiles_dir_path_list = natsorted(os.listdir(tiles_dir_path))
-        iterations = len(tiles_dir_path_list)
-        logger_padding_length = len(str(len(tiles_dir_path_list)))
-        for index, file in enumerate(tiles_dir_path_list):
+        tiles_dir_file_list = natsorted(os.listdir(tiles_dir_path))
+        iterations = len(tiles_dir_file_list)
+        logger_padding_length = len(str(len(tiles_dir_file_list)))
+        for index, file in enumerate(tiles_dir_file_list):
             if str(file).endswith('.tiff'):
                 mask, coordinates = self.get_mask(path=str(os.path.join(tiles_dir_path, file)))
                 image_name = str(os.path.splitext(file)[0])
