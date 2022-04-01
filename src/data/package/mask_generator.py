@@ -176,6 +176,7 @@ class MaskGenerator:
         tiles_dir_file_list = natsorted(os.listdir(tiles_dir_path))
         iterations = len(tiles_dir_file_list)
         logger_padding_length = len(str(len(tiles_dir_file_list)))
+
         for index, file in enumerate(tiles_dir_file_list):
             if str(file).endswith('.tiff'):
                 mask, coordinates = self.get_mask(path=str(os.path.join(tiles_dir_path, file)))
