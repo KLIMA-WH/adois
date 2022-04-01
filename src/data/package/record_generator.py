@@ -1,14 +1,25 @@
+import logging
 from natsort import natsorted
 import numpy as np
 import os
 from PIL import Image
 import tensorflow as tf
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+logger_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s: %(message)s')
+
+file_handler = logging.FileHandler(filename=f'{__name__}.log', mode='w')
+file_handler.setFormatter(logger_formatter)
+logger.addHandler(file_handler)
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(logger_formatter)
+logger.addHandler(console_handler)
+
 
 class RecordGenerator:
     """RecordGenerator
     TODO: class documentation
-    TODO: logging
 
     Author: Marius Maryniak (marius.maryniak@w-hs.de)
     """
@@ -116,6 +127,8 @@ class RecordGenerator:
         rgb_dir_file_list = natsorted(os.listdir(os.path.join(self.dir_path, 'rgb')))
         nir_dir_file_list = natsorted(os.listdir(os.path.join(self.dir_path, 'nir')))
         mask_dir_file_list = natsorted(os.listdir(os.path.join(self.dir_path, 'mask')))
+        iterations = len(rgb_dir_file_list)
+        logger_padding_length = len(str(len(rgb_dir_file_list)))
 
         if len(rgb_dir_file_list) == len(nir_dir_file_list) == len(mask_dir_file_list):
             for index, file in enumerate(rgb_dir_file_list):
@@ -133,6 +146,8 @@ class RecordGenerator:
                                                   nir_image=nir_image,
                                                   mask=mask,
                                                   path=path)
+                    logger.info(f'iteration {index + 1:>{logger_padding_length}} / {iterations} '
+                                f'-> record with id = {index} exported')
                 else:
                     raise ValueError('Invalid image metadata! The ids and the coordinates of the images '
                                      '(rgb, nir, mask) have to match.')
