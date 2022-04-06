@@ -48,6 +48,8 @@ class MaskGenerator:
             if False, the pixel value of the rasterized shapes is 255
         :param bool create_wld: if True, a world file is created
         :param bool create_geotiff: if True, georeferencing metadata is embedded into the image
+        :returns: None
+        :rtype: None
         """
         self.metadata_path = metadata_path
         self.dir_path = os.path.dirname(self.metadata_path)
@@ -205,9 +207,10 @@ class MaskGenerator:
                             column,
                             replacement_dict,
                             delete_list=None):
-        """Preprocesses the shape file, so it can be used with MaskGenerator.
+        """Preprocesses the shape file. The preprocessed shape file is saved with the suffix 'preprocessed' in the
+        directory of the shape file.
 
-        :param str path: relative path to the shape file
+        :param str path: relative path to the shape file of the mask that needs to be rasterized
         :param str column: name of the column of the class values
         :param dict replacement_dict: dictionary of each class value (key) and their mask value (value)
         :param list of str or None delete_list: list of class values to delete
@@ -225,7 +228,7 @@ class MaskGenerator:
         shapes.replace({'mask_value': replacement_dict}, inplace=True)
 
         if delete_list is not None:
-            shapes = shapes[~shapes['mask_value'].isin(delete_list)]
+            shapes = shapes[~shapes.mask_value.isin(delete_list)]
 
         shapes.to_file(os.path.join(os.path.dirname(path),
                                     f"{os.path.splitext(path)[0].split('/')[-1]}_preprocessed.shp"))
