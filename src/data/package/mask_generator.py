@@ -212,8 +212,8 @@ class MaskGenerator:
 
         :param str path: relative path to the shape file of the mask that needs to be rasterized
         :param str column: name of the column of the class values
-        :param dict[str, int] replacement_dict: dictionary of each class value (key) and their mask value (value)
-        :param list[str] or None delete_list: list of class values to delete
+        :param dict[int, int] replacement_dict: dictionary of each class value (key) and their mask value (value)
+        :param list[int] or None delete_list: list of class values to delete
         :returns: None
         :rtype: None
         :raises ValueError: if value in replacement_dict is not valid (not a value between 0 and 255)
