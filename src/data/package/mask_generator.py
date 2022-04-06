@@ -79,7 +79,7 @@ class MaskGenerator:
 
         :param str path: relative path to the image of the corresponding tile
         :returns: image and coordinates
-        :rtype: (np.ndarray of int, (float, float))
+        :rtype: (np.ndarray[int], (float, float))
         """
         image_metadata = os.path.splitext(path)[0].split('/')[-1].split('_')
         coordinates = (float(image_metadata[-2]), float(image_metadata[-1]))
@@ -132,7 +132,7 @@ class MaskGenerator:
         """Exports an image from the get_mask() method. If necessary, a world file with georeferencing metadata
         is created in the same directory as the image itself or georeferencing metadata is embedded into the image.
 
-        :param np.ndarray of int image: image
+        :param np.ndarray[int] image: image
         :param str path: relative path to the image
         :param (float, float) coordinates: coordinates (x, y) of the top left corner
         :returns: None
@@ -212,8 +212,8 @@ class MaskGenerator:
 
         :param str path: relative path to the shape file of the mask that needs to be rasterized
         :param str column: name of the column of the class values
-        :param dict replacement_dict: dictionary of each class value (key) and their mask value (value)
-        :param list of str or None delete_list: list of class values to delete
+        :param dict[str, int] replacement_dict: dictionary of each class value (key) and their mask value (value)
+        :param list[str] or None delete_list: list of class values to delete
         :returns: None
         :rtype: None
         :raises ValueError: if value in replacement_dict is not valid (not a value between 0 and 255)

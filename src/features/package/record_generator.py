@@ -41,10 +41,10 @@ class RecordGenerator:
     def concatenate_to_rgbi(rgb_image, nir_image):
         """Concatenates the rgb image and the nir image to a rgbi image.
 
-        :param np.ndarray of int rgb_image: rgb image
-        :param np.ndarray of int nir_image: nir image
+        :param np.ndarray[int] rgb_image: rgb image
+        :param np.ndarray[int] nir_image: nir image
         :returns: rgbi image
-        :rtype: np.ndarray of int
+        :rtype: np.ndarray[int]
         :raises ValueError: if the dimensions of the nir image are not valid (not a value of 2 or 3)
         """
         if nir_image.ndim == 2:
@@ -71,9 +71,9 @@ class RecordGenerator:
                     mask):
         """Returns an example with 'image' and 'mask' as features. 'image' is a concatenated rgbi image.
 
-        :param np.ndarray of int rgb_image: rgb image
-        :param np.ndarray of int nir_image: nir image
-        :param np.ndarray of int mask: mask
+        :param np.ndarray[int] rgb_image: rgb image
+        :param np.ndarray[int] nir_image: nir image
+        :param np.ndarray[int] mask: mask
         :returns: example
         :rtype: tf.train.Example
         """
@@ -89,9 +89,9 @@ class RecordGenerator:
                       path):
         """Exports a record from the get_example() method.
 
-        :param np.ndarray of int rgb_image: rgb image
-        :param np.ndarray of int nir_image: nir image
-        :param np.ndarray of int mask: mask
+        :param np.ndarray[int] rgb_image: rgb image
+        :param np.ndarray[int] nir_image: nir image
+        :param np.ndarray[int] mask: mask
         :param str path: relative path to the record
         :returns: None
         :rtype: None

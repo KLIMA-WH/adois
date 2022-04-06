@@ -101,7 +101,7 @@ class TileGenerator:
 
         :param (float, float) coordinates: coordinates (x, y) of the top left corner
         :returns: image
-        :rtype: np.ndarray of int
+        :rtype: np.ndarray[int]
         """
         bounding_box = (coordinates[0],
                         round(coordinates[1] - self.image_size_meters, 2),
@@ -145,7 +145,7 @@ class TileGenerator:
         """Exports an image from the get_tile() method. If necessary, a world file with georeferencing metadata
         is created in the same directory as the image itself or georeferencing metadata is embedded into the image.
 
-        :param np.ndarray of int image: image
+        :param np.ndarray[int] image: image
         :param str path: relative path to the image
         :param (float, float) coordinates: coordinates (x, y) of the top left corner
         :returns: None
