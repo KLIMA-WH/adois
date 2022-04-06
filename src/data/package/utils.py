@@ -17,11 +17,10 @@ def preprocess_mask_shp(path,
     :raises ValueError: if value in replacement_dict is not valid (not a value between 0 and 255)
     """
     for value in list(replacement_dict.values()):
-        if 0 <= value <= 255:
-            pass
-        else:
+        if not 0 <= value <= 255:
             raise ValueError('Invalid value in replacement_dict! '
                              'Values in replacement_dict have to be values between 0 and 255.')
+
     shapes = gpd.read_file(path)
     shapes['mask_value'] = shapes[column]
     shapes.replace({'mask_value': replacement_dict}, inplace=True)
