@@ -192,6 +192,7 @@ class MaskGenerator:
                             f'-> mask with id = {index} exported')
 
         metadata = {'timestamp': str(DateTime.now().isoformat(sep=' ', timespec='seconds')),
+                    'multi class mask': self.multi_class_mask,
                     'epsg code': self.epsg_code,
                     'resolution': self.resolution,
                     'image size': self.image_size,
