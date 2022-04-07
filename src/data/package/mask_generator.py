@@ -231,5 +231,4 @@ class MaskGenerator:
         if delete_list is not None:
             shapes = shapes[~shapes.mask_value.isin(delete_list)]
 
-        shapes.to_file(os.path.join(os.path.dirname(path),
-                                    f"{os.path.splitext(path)[0].split('/')[-1]}_preprocessed.shp"))
+        shapes.to_file(f'{os.path.splitext(path)[0]}_preprocessed.shp')
