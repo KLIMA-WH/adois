@@ -218,8 +218,7 @@ class TileGenerator:
                                round(bounding_box[1] + (row + 1) * self.image_size_meters, 2))
                 image = self.get_tile(coordinates=coordinates)
                 if np.any(image) if self.non_zero_ratio == 0 else np.count_nonzero(image) > non_zero_threshold:
-                    image_name = f'{self.image_name_prefix}_{image_id}_' \
-                                 f'{coordinates[0]}_{coordinates[1]}'
+                    image_name = f'{self.image_name_prefix}_{image_id}_{coordinates[0]}_{coordinates[1]}'
                     path = f'{os.path.join(self.dir_path, self.image_name_prefix, image_name)}.tiff'
                     self.export_tile(image=image,
                                      path=path,
