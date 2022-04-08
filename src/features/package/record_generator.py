@@ -39,7 +39,7 @@ class RecordGenerator:
 
     @staticmethod
     def concatenate_to_rgbi(rgb_image, nir_image):
-        """Concatenates the rgb image and the nir image to a rgbi image.
+        """Returns a concatenated rgbi image of the rgb image and the nir image.
 
         :param np.ndarray[int] rgb_image: rgb image
         :param np.ndarray[int] nir_image: nir image
