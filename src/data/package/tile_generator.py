@@ -53,9 +53,9 @@ class TileGenerator:
         :param int epsg_code: epsg code of the coordinate reference system
         :param float resolution: resolution in meters per pixel
         :param int image_size: image size in pixels
-        :param str dir_path: relative path to the directory
+        :param str dir_path: path to the directory
         :param str image_name_prefix: prefix of the image name
-        :param str or None shp_path: relative path to the shape file for masking specific areas
+        :param str or None shp_path: path to the shape file for masking specific areas
         :param bool create_wld: if True, a world file is created
         :param bool create_geotiff: if True, georeferencing metadata is embedded into the image
         :param float non_zero_ratio: ratio of pixels with information (pixel value > 0) to all pixels of the image
@@ -144,7 +144,7 @@ class TileGenerator:
         is created in the same directory as the image itself or georeferencing metadata is embedded into the image.
 
         :param np.ndarray[int] image: image
-        :param str path: relative path to the image
+        :param str path: path to the image
         :param (float, float) coordinates: coordinates (x, y) of the top left corner
         :returns: None
         :rtype: None

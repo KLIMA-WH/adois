@@ -27,7 +27,7 @@ class RecordGenerator:
     def __init__(self, dir_path):
         """Constructor method
 
-        :param str dir_path: relative path to the directory
+        :param str dir_path: path to the directory
         :returns: None
         :rtype: None
         """
@@ -92,7 +92,7 @@ class RecordGenerator:
         :param np.ndarray[int] rgb_image: rgb image
         :param np.ndarray[int] nir_image: nir image
         :param np.ndarray[int] mask: mask
-        :param str path: relative path to the record
+        :param str path: path to the record
         :returns: None
         :rtype: None
         """
@@ -104,7 +104,7 @@ class RecordGenerator:
     def get_image_metadata(path):
         """Returns the image id and the coordinates.
 
-        :param str path: relative path to the image
+        :param str path: path to the image
         :returns: image id and coordinates
         :rtype: (int, (float, float))
         """

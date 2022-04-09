@@ -21,7 +21,7 @@ def export_wld(path,
                coordinates):
     """Exports a world file (.wld).
 
-    :param str path: relative path to the world file
+    :param str path: path to the world file
     :param float resolution: resolution in meters per pixel
     :param (float, float) coordinates: coordinates (x, y) of the top left corner
     :returns: None
@@ -43,7 +43,7 @@ def export_wld(path,
 def export_metadata(path, metadata):
     """Exports a metadata file (.json).
 
-    :param str path: relative path to the metadata file
+    :param str path: path to the metadata file
     :param dict metadata: metadata
     :returns: None
     :rtype: None

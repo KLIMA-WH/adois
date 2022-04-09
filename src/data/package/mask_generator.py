@@ -41,9 +41,9 @@ class MaskGenerator:
                  create_geotiff=False):
         """Constructor method
 
-        :param str metadata_path: relative path to the metadata file created by TileGenerator
-        :param str mask_shp_path: relative path to the shape file of the mask that needs to be rasterized
-        :param str shp_path: relative path to the shape file for masking specific areas
+        :param str metadata_path: path to the metadata file created by TileGenerator
+        :param str mask_shp_path: path to the shape file of the mask that needs to be rasterized
+        :param str shp_path: path to the shape file for masking specific areas
         :param bool multi_class_mask: if True, the pixel value of each rasterized shape equals the value of the column
             mask_value (shape file may need to be preprocessed)
             if False, the pixel value of the rasterized shapes is 255
@@ -78,7 +78,7 @@ class MaskGenerator:
         """Returns an image of the mask to a corresponding tile. If necessary, the image is getting masked
         with the shapes of the optional shape file.
 
-        :param str path: relative path to the image of the corresponding tile
+        :param str path: path to the image of the corresponding tile
         :returns: image and coordinates
         :rtype: (np.ndarray[int], (float, float))
         """
@@ -132,7 +132,7 @@ class MaskGenerator:
         is created in the same directory as the image itself or georeferencing metadata is embedded into the image.
 
         :param np.ndarray[int] image: image
-        :param str path: relative path to the image
+        :param str path: path to the image
         :param (float, float) coordinates: coordinates (x, y) of the top left corner
         :returns: None
         :rtype: None
@@ -206,7 +206,7 @@ class MaskGenerator:
         """Preprocesses the shape file. The preprocessed shape file is saved with the suffix 'preprocessed' in the
         directory of the shape file.
 
-        :param str path: relative path to the shape file of the mask that needs to be rasterized
+        :param str path: path to the shape file of the mask that needs to be rasterized
         :param str column: name of the column of the class values
         :param dict[int, int] replacement_dict: dictionary of each class value (key) and their mask value (value)
         :param list[int] or None delete_list: list of class values to delete
