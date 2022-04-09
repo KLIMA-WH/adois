@@ -1,7 +1,6 @@
 from datetime import datetime as DateTime  # PEP 8 compliant
 import geopandas as gpd
 from io import BytesIO
-import json
 import logging
 import numpy as np
 import os
@@ -9,6 +8,7 @@ from owslib.wms import WebMapService
 from PIL import Image
 import rasterio as rio
 import rasterio.mask
+from src.data.package import utils
 import warnings
 
 logger = logging.getLogger(__name__)
@@ -103,10 +103,8 @@ class TileGenerator:
         :returns: image
         :rtype: np.ndarray[int]
         """
-        bounding_box = (coordinates[0],
-                        round(coordinates[1] - self.image_size_meters, 2),
-                        round(coordinates[0] + self.image_size_meters, 2),
-                        coordinates[1])
+        bounding_box = utils.get_bounding_box(coordinates=coordinates,
+                                              image_size_meters=self.image_size_meters)
         response = self.wms.getmap(layers=[self.layer],
                                    srs=f'EPSG:{self.epsg_code}',
                                    bbox=bounding_box,
@@ -170,13 +168,9 @@ class TileGenerator:
             Image.fromarray(image).save(path)
 
         if self.create_wld:
-            with open(f'{os.path.splitext(path)[0]}.wld', 'w') as file:
-                file.write(f'{self.resolution}\n'
-                           '0.0\n'
-                           '0.0\n'
-                           f'-{self.resolution}\n'
-                           f'{coordinates[0]}\n'
-                           f'{coordinates[1]}')
+            utils.export_wld(path=f'{os.path.splitext(path)[0]}.wld',
+                             resolution=self.resolution,
+                             coordinates=coordinates)
 
     def __call__(self,
                  bounding_box,
@@ -241,8 +235,8 @@ class TileGenerator:
                     'number of columns': columns,
                     'number of rows': rows,
                     'number of iterations': iterations}
-        with open(os.path.join(self.dir_path, f'{self.image_name_prefix}_metadata.json'), 'w') as file:
-            json.dump(metadata, file, indent=4)
+        utils.export_metadata(path=os.path.join(self.dir_path, f'{self.image_name_prefix}_metadata.json'),
+                              metadata=metadata)
 
     @staticmethod
     def print_info(wms_url):
