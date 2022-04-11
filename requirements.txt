@@ -1,0 +1,7 @@
+geopandas==0.9.0
+git+https://Alex_Ross:dECmn8M5Sa3FzYFxQ7kd@bitbucket.org/chkuhl/general_utilities.git
+natsort==8.1.0
+numpy==1.19.5
+OWSLib==0.25.0
+Pillow==8.4.0
+rasterio==1.2.10
