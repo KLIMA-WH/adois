@@ -102,7 +102,7 @@ class MaskGenerator:
                                           out_shape=(self.image_size, self.image_size),
                                           transform=transform)
         except ValueError:
-            mask = np.zeros(shape=(self.image_size, self.image_size))
+            mask = np.zeros(shape=(self.image_size, self.image_size), dtype=np.uint8)
         mask = np.rollaxis(np.expand_dims(mask, axis=-1), axis=-1)
 
         if self.shapes is not None:
