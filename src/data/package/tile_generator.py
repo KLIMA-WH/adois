@@ -165,7 +165,8 @@ class TileGenerator:
                           nodata=0) as file:
                 file.write(image)
         else:
-            Image.fromarray(image).save(path)
+            # noinspection PyTypeChecker
+            Image.fromarray(np.moveaxis(image, source=0, destination=-1)).save(path)
 
         if self.create_wld:
             utils.export_wld(path=f'{os.path.splitext(path)[0]}.wld',
