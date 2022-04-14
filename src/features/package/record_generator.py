@@ -1,7 +1,9 @@
+from datetime import datetime as DateTime  # PEP 8 compliant
 import logging
 from natsort import natsorted
 import numpy as np
 import os
+import pathlib
 from PIL import Image
 import tensorflow as tf
 
@@ -9,9 +11,12 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 logger_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s: %(message)s')
 
-file_handler = logging.FileHandler(filename=f'{__name__}.log', mode='w')
+log_dir = os.path.join(pathlib.Path(__file__).parents[1], 'logs')
+date_time = str(DateTime.now().isoformat(sep='_', timespec='seconds')).replace(':', '-')
+file_handler = logging.FileHandler(filename=os.path.join(log_dir, f'{date_time}_record_generator.log'), mode='w')
 file_handler.setFormatter(logger_formatter)
 logger.addHandler(file_handler)
+
 console_handler = logging.StreamHandler()
 console_handler.setFormatter(logger_formatter)
 logger.addHandler(console_handler)

@@ -127,6 +127,14 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Data Directories
 /data/
+
+# Script Directories
 /src/data/scripts/
 /src/features/scripts/
+
+# Log Directories
+/src/data/logs/
+/src/features/logs/
