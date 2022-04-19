@@ -1,10 +1,11 @@
-from datetime import datetime as DateTime  # PEP 8 compliant
 import logging
-from natsort import natsorted
-import numpy as np
+from datetime import datetime as DateTime  # PEP 8 compliant
 from pathlib import Path
-from PIL import Image
+
+import numpy as np
 import tensorflow as tf
+from PIL import Image
+from natsort import natsorted
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)

@@ -1,14 +1,16 @@
-from datetime import datetime as DateTime  # PEP 8 compliant
-import geopandas as gpd
 import json
 import logging
-from natsort import natsorted
-import numpy as np
+from datetime import datetime as DateTime  # PEP 8 compliant
 from pathlib import Path
-from PIL import Image
+
+import geopandas as gpd
+import numpy as np
 import rasterio as rio
 import rasterio.features
 import rasterio.mask
+from PIL import Image
+from natsort import natsorted
+
 from src.data.package import utils
 
 logger = logging.getLogger(__name__)

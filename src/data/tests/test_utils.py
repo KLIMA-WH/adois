@@ -1,8 +1,9 @@
 import json
-from pathlib import Path
-from src.data.package import utils
 import tempfile
 import unittest
+from pathlib import Path
+
+from src.data.package import utils
 
 
 class TestUtils(unittest.TestCase):
