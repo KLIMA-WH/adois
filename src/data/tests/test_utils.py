@@ -1,5 +1,5 @@
 import json
-import os
+from pathlib import Path
 from src.data.package import utils
 import tempfile
 import unittest
@@ -20,17 +20,17 @@ class TestUtils(unittest.TestCase):
         test_coordinates = (363193.98, 5715477.01)
         content = '0.1\n0.0\n0.0\n-0.1\n363193.98\n5715477.01'
         with tempfile.TemporaryDirectory(dir='') as temp_dir:
-            utils.export_wld(path=os.path.join(temp_dir, test_path),
+            utils.export_wld(path=str(Path(temp_dir) / test_path),
                              resolution=test_resolution,
                              coordinates=test_coordinates)
-            with open(os.path.join(temp_dir, test_path), 'r') as file:
+            with open(Path(temp_dir) / test_path, 'r') as file:
                 test_content = file.read()
             self.assertEqual(test_content, content)
 
         test_path = 'test.txt'
         with self.assertRaises(ValueError):
             with tempfile.TemporaryDirectory(dir='') as temp_dir:
-                utils.export_wld(path=os.path.join(temp_dir, test_path),
+                utils.export_wld(path=str(Path(temp_dir) / test_path),
                                  resolution=test_resolution,
                                  coordinates=test_coordinates)
 
@@ -39,16 +39,16 @@ class TestUtils(unittest.TestCase):
         test_metadata = {'a': 1, 'b': 2, 'c': 3}
         content = {'a': 1, 'b': 2, 'c': 3}
         with tempfile.TemporaryDirectory(dir='') as temp_dir:
-            utils.export_metadata(path=os.path.join(temp_dir, test_path),
+            utils.export_metadata(path=str(Path(temp_dir) / test_path),
                                   metadata=test_metadata)
-            with open(os.path.join(temp_dir, test_path), 'r') as file:
+            with open(Path(temp_dir) / test_path, 'r') as file:
                 test_content = json.load(file)
             self.assertEqual(test_content, content)
 
         test_path = 'test.txt'
         with self.assertRaises(ValueError):
             with tempfile.TemporaryDirectory(dir='') as temp_dir:
-                utils.export_metadata(path=os.path.join(temp_dir, test_path),
+                utils.export_metadata(path=str(Path(temp_dir) / test_path),
                                       metadata=test_metadata)
 
 

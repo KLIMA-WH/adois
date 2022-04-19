@@ -4,8 +4,7 @@ import json
 import logging
 from natsort import natsorted
 import numpy as np
-import os
-import pathlib
+from pathlib import Path
 from PIL import Image
 import rasterio as rio
 import rasterio.features
@@ -16,9 +15,9 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 logger_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s: %(message)s')
 
-log_dir = os.path.join(pathlib.Path(__file__).parents[1], 'logs')
+log_dir = Path(__file__).parents[1] / 'logs'
 date_time = str(DateTime.now().isoformat(sep='_', timespec='seconds')).replace(':', '-')
-file_handler = logging.FileHandler(filename=os.path.join(log_dir, f'{date_time}_mask_generator.log'), mode='w')
+file_handler = logging.FileHandler(filename=log_dir / f'{date_time}_mask_generator.log', mode='w')
 file_handler.setFormatter(logger_formatter)
 logger.addHandler(file_handler)
 
@@ -56,8 +55,8 @@ class MaskGenerator:
         :returns: None
         :rtype: None
         """
-        self.metadata_path = metadata_path
-        self.dir_path = os.path.dirname(self.metadata_path)
+        self.metadata_path = Path(metadata_path)
+        self.dir_path = self.metadata_path.parents[0]
         self.mask_shp_path = mask_shp_path
         if shp_path is not None:
             shapes = gpd.read_file(shp_path)
@@ -73,10 +72,7 @@ class MaskGenerator:
         self.resolution = self.metadata.get('resolution')
         self.image_size = self.metadata.get('image size')
         self.image_size_meters = self.resolution * self.image_size
-        try:
-            os.mkdir(os.path.join(self.dir_path, 'mask'))
-        except FileExistsError:
-            print(f"Directory {os.path.join(self.dir_path, 'mask')} already exists!")
+        (self.dir_path / 'mask').mkdir(exist_ok=True)
 
     def get_mask(self, path):
         """Returns an image of the mask to a corresponding tile. If necessary, the image is getting masked
@@ -86,7 +82,7 @@ class MaskGenerator:
         :returns: image and coordinates
         :rtype: (np.ndarray[int], (float, float))
         """
-        image_metadata = os.path.splitext(path)[0].split('/')[-1].split('_')
+        image_metadata = Path(path).stem.split('_')
         coordinates = (float(image_metadata[-2]), float(image_metadata[-1]))
         bounding_box = utils.get_bounding_box(coordinates=coordinates,
                                               image_size_meters=self.image_size_meters)
@@ -161,7 +157,7 @@ class MaskGenerator:
             Image.fromarray(np.moveaxis(image, source=0, destination=-1)).save(path)
 
         if self.create_wld:
-            utils.export_wld(path=f'{os.path.splitext(path)[0]}.wld',
+            utils.export_wld(path=str(Path(path).with_suffix('.wld')),
                              resolution=self.resolution,
                              coordinates=coordinates)
 
@@ -173,20 +169,19 @@ class MaskGenerator:
         :returns: None
         :rtype: None
         """
-        image_name_prefix = '_'.join(os.path.splitext(self.metadata_path)[0].split('/')[-1].split('_')[:-1])
-        tiles_dir_path = os.path.join(self.dir_path, image_name_prefix)
-        tiles_dir_file_list = natsorted(os.listdir(tiles_dir_path))
+        image_name_prefix = '_'.join(self.metadata_path.stem.split('_')[:-1])
+        tiles_dir_path = self.dir_path / image_name_prefix
+        tiles_dir_file_list = natsorted([x.name for x in tiles_dir_path.iterdir() if x.is_file()])
         iterations = len(tiles_dir_file_list)
         logger_padding_length = len(str(len(tiles_dir_file_list)))
 
         for index, file in enumerate(tiles_dir_file_list):
             if str(file).endswith('.tiff'):
-                mask, coordinates = self.get_mask(path=str(os.path.join(tiles_dir_path, file)))
-                image_name = str(os.path.splitext(file)[0])
+                mask, coordinates = self.get_mask(path=str(tiles_dir_path / file))
+                image_name = Path(file).stem
                 mask_name = f"mask_{'_'.join(image_name.split('_')[-3:])}.tiff"
-                path = os.path.join(self.dir_path, 'mask', mask_name)
                 self.export_mask(image=mask,
-                                 path=path,
+                                 path=str(self.dir_path / 'mask' / mask_name),
                                  coordinates=coordinates)
                 logger.info(f'iteration {index + 1:>{logger_padding_length}} / {iterations} '
                             f'-> mask with id = {index} exported')
@@ -200,7 +195,7 @@ class MaskGenerator:
                     'number of columns': self.metadata.get('number of columns'),
                     'number of rows': self.metadata.get('number of rows'),
                     'number of iterations': self.metadata.get('number of iterations')}
-        utils.export_metadata(path=os.path.join(self.dir_path, 'mask_metadata.json'),
+        utils.export_metadata(path=str(self.dir_path / 'mask_metadata.json'),
                               metadata=metadata)
 
     @staticmethod
@@ -231,4 +226,4 @@ class MaskGenerator:
         if delete_list is not None:
             shapes = shapes[~shapes.mask_value.isin(delete_list)]
 
-        shapes.to_file(f'{os.path.splitext(path)[0]}_preprocessed.shp')
+        shapes.to_file(f'{Path(path).stem}_preprocessed.shp')

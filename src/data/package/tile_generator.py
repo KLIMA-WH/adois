@@ -3,9 +3,8 @@ import geopandas as gpd
 from io import BytesIO
 import logging
 import numpy as np
-import os
 from owslib.wms import WebMapService
-import pathlib
+from pathlib import Path
 from PIL import Image
 import rasterio as rio
 import rasterio.mask
@@ -16,9 +15,9 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 logger_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s: %(message)s')
 
-log_dir = os.path.join(pathlib.Path(__file__).parents[1], 'logs')
+log_dir = Path(__file__).parents[1] / 'logs'
 date_time = str(DateTime.now().isoformat(sep='_', timespec='seconds')).replace(':', '-')
-file_handler = logging.FileHandler(filename=os.path.join(log_dir, f'{date_time}_tile_generator.log'), mode='w')
+file_handler = logging.FileHandler(filename=log_dir / f'{date_time}_tile_generator.log', mode='w')
 file_handler.setFormatter(logger_formatter)
 logger.addHandler(file_handler)
 
@@ -81,7 +80,7 @@ class TileGenerator:
             raise ValueError('Invalid image_size! image_size has to be a power of base 2 or its tenfold. Try '
                              f'{[*TileGenerator.VALID_IMAGE_SIZE]}.')
         self.image_size_meters = self.resolution * self.image_size
-        self.dir_path = dir_path
+        self.dir_path = Path(dir_path)
         self.image_name_prefix = image_name_prefix
         if shp_path is not None:
             shapes = gpd.read_file(shp_path)
@@ -94,10 +93,7 @@ class TileGenerator:
             self.non_zero_ratio = non_zero_ratio
         else:
             raise ValueError('Invalid non_zero_ratio! non_zero_ratio has to be a value between 0 and 1.')
-        try:
-            os.mkdir(os.path.join(self.dir_path, self.image_name_prefix))
-        except FileExistsError:
-            print(f'Directory {os.path.join(self.dir_path, self.image_name_prefix)} already exists!')
+        (self.dir_path / self.image_name_prefix).mkdir(exist_ok=True)
 
     def get_tile(self, coordinates):
         """Returns an image given its coordinates of the top left corner. If necessary, the image is getting masked
@@ -173,7 +169,7 @@ class TileGenerator:
             Image.fromarray(np.moveaxis(image, source=0, destination=-1)).save(path)
 
         if self.create_wld:
-            utils.export_wld(path=f'{os.path.splitext(path)[0]}.wld',
+            utils.export_wld(path=str(Path(path).with_suffix('.wld')),
                              resolution=self.resolution,
                              coordinates=coordinates)
 
@@ -218,9 +214,9 @@ class TileGenerator:
                 image = self.get_tile(coordinates=coordinates)
                 if np.any(image) if self.non_zero_ratio == 0 else np.count_nonzero(image) > non_zero_threshold:
                     image_name = f'{self.image_name_prefix}_{image_id}_{coordinates[0]}_{coordinates[1]}'
-                    path = f'{os.path.join(self.dir_path, self.image_name_prefix, image_name)}.tiff'
+                    path = self.dir_path / self.image_name_prefix / f'{image_name}.tiff'
                     self.export_tile(image=image,
-                                     path=path,
+                                     path=str(path),
                                      coordinates=coordinates)
                     logger.info(f'iteration {index + 1:>{logger_padding_length}} / {iterations} '
                                 f'-> image with id = {image_id} exported')
@@ -240,7 +236,7 @@ class TileGenerator:
                     'number of columns': columns,
                     'number of rows': rows,
                     'number of iterations': iterations}
-        utils.export_metadata(path=os.path.join(self.dir_path, f'{self.image_name_prefix}_metadata.json'),
+        utils.export_metadata(path=str(self.dir_path / f'{self.image_name_prefix}_metadata.json'),
                               metadata=metadata)
 
     @staticmethod

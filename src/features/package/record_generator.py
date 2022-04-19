@@ -2,8 +2,7 @@ from datetime import datetime as DateTime  # PEP 8 compliant
 import logging
 from natsort import natsorted
 import numpy as np
-import os
-import pathlib
+from pathlib import Path
 from PIL import Image
 import tensorflow as tf
 
@@ -11,9 +10,9 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 logger_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s: %(message)s')
 
-log_dir = os.path.join(pathlib.Path(__file__).parents[1], 'logs')
+log_dir = Path(__file__).parents[1] / 'logs'
 date_time = str(DateTime.now().isoformat(sep='_', timespec='seconds')).replace(':', '-')
-file_handler = logging.FileHandler(filename=os.path.join(log_dir, f'{date_time}_record_generator.log'), mode='w')
+file_handler = logging.FileHandler(filename=log_dir / f'{date_time}_record_generator.log', mode='w')
 file_handler.setFormatter(logger_formatter)
 logger.addHandler(file_handler)
 
@@ -36,11 +35,8 @@ class RecordGenerator:
         :returns: None
         :rtype: None
         """
-        self.dir_path = dir_path
-        try:
-            os.mkdir(os.path.join(self.dir_path, 'records'))
-        except FileExistsError:
-            print(f"Directory {os.path.join(self.dir_path, 'records')} already exists!")
+        self.dir_path = Path(dir_path)
+        (self.dir_path / 'records').mkdir(exist_ok=True)
 
     @staticmethod
     def concatenate_to_rgbi(rgb_image, nir_image):
@@ -113,7 +109,7 @@ class RecordGenerator:
         :returns: image id and coordinates
         :rtype: (int, (float, float))
         """
-        image_metadata = os.path.splitext(path)[0].split('/')[-1].split('_')
+        image_metadata = Path(path).stem.split('_')
         image_id = int(image_metadata[-3])
         coordinates = (float(image_metadata[-2]), float(image_metadata[-1]))
         return image_id, coordinates
@@ -129,9 +125,9 @@ class RecordGenerator:
             (rgb, nir, mask) do not match) or
             if the number of images is not valid (the number of images in each directory (rbg, nir, mask) do not match)
         """
-        rgb_dir_file_list = natsorted(os.listdir(os.path.join(self.dir_path, 'rgb')))
-        nir_dir_file_list = natsorted(os.listdir(os.path.join(self.dir_path, 'nir')))
-        mask_dir_file_list = natsorted(os.listdir(os.path.join(self.dir_path, 'mask')))
+        rgb_dir_file_list = natsorted([x.name for x in (self.dir_path / 'rgb').iterdir() if x.is_file()])
+        nir_dir_file_list = natsorted([x.name for x in (self.dir_path / 'nir').iterdir() if x.is_file()])
+        mask_dir_file_list = natsorted([x.name for x in (self.dir_path / 'mask').iterdir() if x.is_file()])
         iterations = len(rgb_dir_file_list)
         logger_padding_length = len(str(len(rgb_dir_file_list)))
 
@@ -142,15 +138,14 @@ class RecordGenerator:
                 mask_id, mask_coordinates = RecordGenerator.get_image_metadata(mask_dir_file_list[index])
                 if (rgb_id == nir_id == mask_id == index and
                         rgb_coordinates == nir_coordinates == mask_coordinates):
-                    rgb_image = np.array(Image.open(os.path.join(self.dir_path, 'rgb', rgb_dir_file_list[index])))
-                    nir_image = np.array(Image.open(os.path.join(self.dir_path, 'nir', nir_dir_file_list[index])))
-                    mask = np.array(Image.open(os.path.join(self.dir_path, 'mask', mask_dir_file_list[index])))
-                    path = os.path.join(self.dir_path, 'records',
-                                        f'{rgb_id}_{rgb_coordinates[0]}_{rgb_coordinates[1]}.tfrecord')
+                    rgb_image = np.array(Image.open(self.dir_path / 'rgb' / rgb_dir_file_list[index]))
+                    nir_image = np.array(Image.open(self.dir_path / 'nir' / nir_dir_file_list[index]))
+                    mask = np.array(Image.open(self.dir_path / 'mask' / mask_dir_file_list[index]))
+                    path = self.dir_path / 'records' / f'{rgb_id}_{rgb_coordinates[0]}_{rgb_coordinates[1]}.tfrecord'
                     RecordGenerator.export_record(rgb_image=rgb_image,
                                                   nir_image=nir_image,
                                                   mask=mask,
-                                                  path=path)
+                                                  path=str(path))
                     logger.info(f'iteration {index + 1:>{logger_padding_length}} / {iterations} '
                                 f'-> record with id = {index} exported')
                 else:
