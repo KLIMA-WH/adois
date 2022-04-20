@@ -17,9 +17,9 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 logger_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s: %(message)s')
 
-log_dir = Path(__file__).parents[1] / 'logs'
+log_dir_path = Path(__file__).parents[1] / 'logs'
 date_time = str(DateTime.now().isoformat(sep='_', timespec='seconds')).replace(':', '-')
-file_handler = logging.FileHandler(filename=log_dir / f'{date_time}_mask_generator.log', mode='w')
+file_handler = logging.FileHandler(filename=log_dir_path / f'{date_time}_mask_generator.log', mode='w')
 file_handler.setFormatter(logger_formatter)
 logger.addHandler(file_handler)
 
