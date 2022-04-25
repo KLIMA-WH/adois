@@ -1,4 +1,5 @@
 import json
+from datetime import timedelta as TimeDelta  # PEP 8 compliant
 
 
 def get_bounding_box(coordinates, image_size_meters):
@@ -54,3 +55,13 @@ def export_metadata(path, metadata):
             json.dump(metadata, file, indent=4)
     else:
         raise ValueError('Invalid path! The file extension of the path has to be .json.')
+
+
+def chop_microseconds(delta):
+    """Returns a timedelta without the microseconds.
+
+    :param TimeDelta delta: timedelta (difference of two datetimes)
+    :returns: timedelta without the microseconds
+    :rtype: TimeDelta
+    """
+    return delta - TimeDelta(microseconds=delta.microseconds)
