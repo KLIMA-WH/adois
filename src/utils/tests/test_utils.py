@@ -1,6 +1,8 @@
 import json
 import tempfile
 import unittest
+from datetime import datetime as DateTime  # PEP 8 compliant
+from datetime import timedelta as TimeDelta  # PEP 8 compliant
 from pathlib import Path
 
 from src.utils.package import utils
@@ -51,6 +53,28 @@ class TestUtils(unittest.TestCase):
             with tempfile.TemporaryDirectory(dir='') as temp_dir:
                 utils.export_metadata(path=str(Path(temp_dir) / test_path),
                                       metadata=test_metadata)
+
+    def test_chop_microseconds(self):
+        test_datetime_1 = DateTime(year=2020,
+                                   month=1,
+                                   day=1,
+                                   hour=10,
+                                   minute=10,
+                                   second=10,
+                                   microsecond=0)
+        test_datetime_2 = DateTime(year=2020,
+                                   month=1,
+                                   day=2,
+                                   hour=20,
+                                   minute=20,
+                                   second=20,
+                                   microsecond=123456)
+        result = TimeDelta(days=1,
+                           hours=10,
+                           minutes=10,
+                           seconds=10)
+        test_result = utils.chop_microseconds(delta=test_datetime_2 - test_datetime_1)
+        self.assertEqual(test_result, result)
 
 
 if __name__ == '__main__':
