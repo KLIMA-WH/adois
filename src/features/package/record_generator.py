@@ -7,6 +7,8 @@ import tensorflow as tf
 from PIL import Image
 from natsort import natsorted
 
+from src.utils.package import utils
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 logger_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s: %(message)s')
@@ -102,19 +104,6 @@ class RecordGenerator:
             example = RecordGenerator.get_example(rgb_image=rgb_image, nir_image=nir_image, mask=mask)
             writer.write(example.SerializeToString())
 
-    @staticmethod
-    def get_image_metadata(path):
-        """Returns the image id and the coordinates.
-
-        :param str path: path to the image
-        :returns: image id and coordinates
-        :rtype: (int, (float, float))
-        """
-        image_metadata = Path(path).stem.split('_')
-        image_id = int(image_metadata[-3])
-        coordinates = (float(image_metadata[-2]), float(image_metadata[-1]))
-        return image_id, coordinates
-
     def __call__(self):
         """Exports all images (rgb, nir, mask) of an area as a record to the records directory.
         Each record name consists of the following attributes separated by an underscore:
@@ -134,9 +123,9 @@ class RecordGenerator:
 
         if len(rgb_dir_file_list) == len(nir_dir_file_list) == len(mask_dir_file_list):
             for index, file in enumerate(rgb_dir_file_list):
-                rgb_id, rgb_coordinates = RecordGenerator.get_image_metadata(rgb_dir_file_list[index])
-                nir_id, nir_coordinates = RecordGenerator.get_image_metadata(nir_dir_file_list[index])
-                mask_id, mask_coordinates = RecordGenerator.get_image_metadata(mask_dir_file_list[index])
+                _, rgb_id, rgb_coordinates = utils.get_image_metadata(rgb_dir_file_list[index])
+                _, nir_id, nir_coordinates = utils.get_image_metadata(nir_dir_file_list[index])
+                _, mask_id, mask_coordinates = utils.get_image_metadata(mask_dir_file_list[index])
                 if (rgb_id == nir_id == mask_id == index and
                         rgb_coordinates == nir_coordinates == mask_coordinates):
                     rgb_image = np.array(Image.open(self.dir_path / 'rgb' / rgb_dir_file_list[index]))

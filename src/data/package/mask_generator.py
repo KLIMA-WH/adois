@@ -84,8 +84,7 @@ class MaskGenerator:
         :returns: image and coordinates
         :rtype: (np.ndarray[int], (float, float))
         """
-        image_metadata = Path(path).stem.split('_')
-        coordinates = (float(image_metadata[-2]), float(image_metadata[-1]))
+        _, _, coordinates = utils.get_image_metadata(path)
         bounding_box = utils.get_bounding_box(coordinates=coordinates,
                                               image_size_meters=self.image_size_meters)
 
