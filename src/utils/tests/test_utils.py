@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from src.data.package import utils
+from src.utils.package import utils
 
 
 class TestUtils(unittest.TestCase):

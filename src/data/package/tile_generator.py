@@ -11,7 +11,7 @@ import rasterio.mask
 from PIL import Image
 from owslib.wms import WebMapService
 
-from src.data.package import utils
+from src.utils.package import utils
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
