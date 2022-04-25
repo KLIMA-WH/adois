@@ -113,12 +113,12 @@ class TestUtils(unittest.TestCase):
 
     def test_get_image_metadata(self):
         test_path = 'test_dir/test_abc_0_363193.98_5715477.01.tiff'
-        result = ('test_abc', 0, 363193.98, 5715477.01)
+        result = ('test_abc', 0, (363193.98, 5715477.01))
         test_result = utils.get_image_metadata(path=test_path)
         self.assertTupleEqual(test_result, result)
 
         test_path = Path('test_dir/test_abc_0_363193.98_5715477.01.tiff')
-        result = ('test_abc', 0, 363193.98, 5715477.01)
+        result = ('test_abc', 0, (363193.98, 5715477.01))
         test_result = utils.get_image_metadata(path=test_path)
         self.assertTupleEqual(test_result, result)
 
