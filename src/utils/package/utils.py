@@ -68,3 +68,21 @@ def chop_microseconds(delta):
     :rtype: TimeDelta
     """
     return delta - TimeDelta(microseconds=delta.microseconds)
+
+
+def get_image_metadata(path):
+    """Returns the metadata of an image.
+    Due to this projects convention, image names consist of the following attributes separated by an underscore:
+    'prefix_id_x_y.tiff'
+
+    :param str or Path path: path to the image
+    :returns: image metadata (prefix, id, x, y)
+    :rtype: (str, int, float, float)
+    """
+    path = Path(path)
+    image_metadata_list = path.stem.split('_')
+    image_metadata = ('_'.join(image_metadata_list[:-3]),
+                      int(image_metadata_list[-3]),
+                      float(image_metadata_list[-2]),
+                      float(image_metadata_list[-1]))
+    return image_metadata
