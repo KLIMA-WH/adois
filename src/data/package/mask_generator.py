@@ -174,20 +174,19 @@ class MaskGenerator:
 
         image_name_prefix = '_'.join(self.metadata_path.stem.split('_')[:-1])
         tiles_dir_path = self.dir_path / image_name_prefix
-        tiles_dir_file_list = natsorted([x.name for x in tiles_dir_path.iterdir() if x.is_file()])
+        tiles_dir_file_list = natsorted([x.name for x in tiles_dir_path.iterdir() if x.suffix == '.tiff'])
         iterations = len(tiles_dir_file_list)
         logger_padding_length = len(str(len(tiles_dir_file_list)))
 
         for index, file in enumerate(tiles_dir_file_list):
-            if str(file).endswith('.tiff'):
-                mask, coordinates = self.get_mask(path=str(tiles_dir_path / file))
-                image_name = Path(file).stem
-                mask_name = f"mask_{'_'.join(image_name.split('_')[-3:])}.tiff"
-                self.export_mask(image=mask,
-                                 path=str(self.dir_path / 'mask' / mask_name),
-                                 coordinates=coordinates)
-                logger.info(f'iteration {index + 1:>{logger_padding_length}} / {iterations} '
-                            f'-> mask with id = {index} exported')
+            mask, coordinates = self.get_mask(path=str(tiles_dir_path / file))
+            image_name = Path(file).stem
+            mask_name = f"mask_{'_'.join(image_name.split('_')[-3:])}.tiff"
+            self.export_mask(image=mask,
+                             path=str(self.dir_path / 'mask' / mask_name),
+                             coordinates=coordinates)
+            logger.info(f'iteration {index + 1:>{logger_padding_length}} / {iterations} '
+                        f'-> mask with id = {index} exported')
 
         end_time = DateTime.now()
         delta = utils.chop_microseconds(delta=end_time - start_time)

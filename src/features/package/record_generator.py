@@ -115,9 +115,9 @@ class RecordGenerator:
             (rgb, nir, mask) do not match) or
             if the number of images is not valid (the number of images in each directory (rbg, nir, mask) do not match)
         """
-        rgb_dir_file_list = natsorted([x.name for x in (self.dir_path / 'rgb').iterdir() if x.is_file()])
-        nir_dir_file_list = natsorted([x.name for x in (self.dir_path / 'nir').iterdir() if x.is_file()])
-        mask_dir_file_list = natsorted([x.name for x in (self.dir_path / 'mask').iterdir() if x.is_file()])
+        rgb_dir_file_list = natsorted([x.name for x in (self.dir_path / 'rgb').iterdir() if x.suffix == '.tiff'])
+        nir_dir_file_list = natsorted([x.name for x in (self.dir_path / 'nir').iterdir() if x.suffix == '.tiff'])
+        mask_dir_file_list = natsorted([x.name for x in (self.dir_path / 'mask').iterdir() if x.suffix == '.tiff'])
         iterations = len(rgb_dir_file_list)
         logger_padding_length = len(str(len(rgb_dir_file_list)))
 
