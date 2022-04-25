@@ -191,6 +191,8 @@ class TileGenerator:
         :rtype: None
         :raises ValueError: if bounding_box is not valid (x_1 > x_2 or y_1 > y_2)
         """
+        start_time = DateTime.now()
+
         if bounding_box[0] >= bounding_box[2] or bounding_box[1] >= bounding_box[3]:
             raise ValueError('Invalid bounding_box! x_1 has to be smaller than x_2 and '
                              'y_1 has to be smaller than y_2.')
@@ -228,7 +230,11 @@ class TileGenerator:
                                 f'-> image skipped')
                 index += 1
 
+        end_time = DateTime.now()
+        delta = utils.chop_microseconds(delta=end_time - start_time)
+
         metadata = {'timestamp': str(DateTime.now().isoformat(sep=' ', timespec='seconds')),
+                    'execution time': str(delta),
                     'wms url': self.wms_url,
                     'layer': self.layer,
                     'epsg code': self.epsg_code,

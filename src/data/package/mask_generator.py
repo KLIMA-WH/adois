@@ -171,6 +171,8 @@ class MaskGenerator:
         :returns: None
         :rtype: None
         """
+        start_time = DateTime.now()
+
         image_name_prefix = '_'.join(self.metadata_path.stem.split('_')[:-1])
         tiles_dir_path = self.dir_path / image_name_prefix
         tiles_dir_file_list = natsorted([x.name for x in tiles_dir_path.iterdir() if x.is_file()])
@@ -188,7 +190,11 @@ class MaskGenerator:
                 logger.info(f'iteration {index + 1:>{logger_padding_length}} / {iterations} '
                             f'-> mask with id = {index} exported')
 
+        end_time = DateTime.now()
+        delta = utils.chop_microseconds(delta=end_time - start_time)
+
         metadata = {'timestamp': str(DateTime.now().isoformat(sep=' ', timespec='seconds')),
+                    'execution time': str(delta),
                     'multi class mask': self.multi_class_mask,
                     'epsg code': self.epsg_code,
                     'resolution': self.resolution,
