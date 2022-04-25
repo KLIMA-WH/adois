@@ -197,6 +197,11 @@ class TileGenerator:
             raise ValueError('Invalid bounding_box! x_1 has to be smaller than x_2 and '
                              'y_1 has to be smaller than y_2.')
 
+        bounding_box = (round(bounding_box[0], 2),
+                        round(bounding_box[1], 2),
+                        round(bounding_box[2], 2),
+                        round(bounding_box[3], 2))
+
         columns = int((bounding_box[2] - bounding_box[0]) // self.image_size_meters)
         if (bounding_box[2] - bounding_box[0]) % self.image_size_meters:
             columns += 1
