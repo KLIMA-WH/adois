@@ -1,5 +1,6 @@
 import json
 from datetime import timedelta as TimeDelta  # PEP 8 compliant
+from pathlib import Path
 
 
 def get_bounding_box(coordinates, image_size_meters):
@@ -22,14 +23,15 @@ def export_wld(path,
                coordinates):
     """Exports a world file (.wld).
 
-    :param str path: path to the world file
+    :param str or Path path: path to the world file
     :param float resolution: resolution in meters per pixel
     :param (float, float) coordinates: coordinates (x, y) of the top left corner
     :returns: None
     :rtype: None
     :raises ValueError: if path is not valid (file extension is not .wld)
     """
-    if path.endswith('.wld'):
+    path = Path(path)
+    if path.suffix == '.wld':
         with open(path, 'w') as file:
             file.write(f'{resolution}\n'
                        '0.0\n'
@@ -44,13 +46,14 @@ def export_wld(path,
 def export_metadata(path, metadata):
     """Exports a metadata file (.json).
 
-    :param str path: path to the metadata file
+    :param str or Path path: path to the metadata file
     :param dict metadata: metadata
     :returns: None
     :rtype: None
     :raises ValueError: if path is not valid (file extension is not .json)
     """
-    if path.endswith('.json'):
+    path = Path(path)
+    if path.suffix == '.json':
         with open(path, 'w') as file:
             json.dump(metadata, file, indent=4)
     else:
