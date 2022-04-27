@@ -39,9 +39,9 @@ class TileAggregator:
         self.dir_path = Path(dir_path)
         self.epsg_code = epsg_code
         self.resolution = resolution
-        self.image_size = image_size
+        self.image_size = image_size / tiles_per_dimension
         self.image_size_meters = self.resolution * self.image_size
-        self.image_pixels = image_size ** 2
+        self.image_pixels = self.image_size ** 2
         self.tiles_per_dimension = tiles_per_dimension
         (self.dir_path.parents[0] / 'aggregated').mkdir(exist_ok=True)
 
@@ -63,7 +63,7 @@ class TileAggregator:
         :rtype: Polygon
         """
         bounding_box = utils.get_bounding_box(coordinates=coordinates,
-                                              image_size_meters=self.image_size_meters / self.tiles_per_dimension)
+                                              image_size_meters=self.image_size_meters)
         polygon = Polygon([[bounding_box[0], bounding_box[1]],
                            [bounding_box[0], bounding_box[3]],
                            [bounding_box[2], bounding_box[3]],
@@ -85,8 +85,8 @@ class TileAggregator:
             mask = np.array(Image.open(file))
             _, _, coordinates = utils.get_image_metadata(file)
 
-            tile_size = int(self.image_size / self.tiles_per_dimension)
-            tile_size_meters = self.image_size_meters / self.tiles_per_dimension
+            tile_size = int(self.image_size)
+            tile_size_meters = self.image_size_meters
 
             for row in range(self.tiles_per_dimension):
                 for column in range(self.tiles_per_dimension):
