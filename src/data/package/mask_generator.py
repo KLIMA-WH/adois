@@ -113,7 +113,7 @@ class MaskGenerator:
                         width=self.image_size,
                         height=self.image_size,
                         count=MaskGenerator.BANDS,
-                        crs={'init': f'epsg:{self.epsg_code}'},
+                        crs=f'epsg:{self.epsg_code}',
                         transform=transform,
                         dtype=mask.dtype,
                         nodata=0) as dataset:
@@ -148,7 +148,7 @@ class MaskGenerator:
                           width=self.image_size,
                           height=self.image_size,
                           count=MaskGenerator.BANDS,
-                          crs={'init': f'epsg:{self.epsg_code}'},
+                          crs=f'epsg:{self.epsg_code}',
                           transform=transform,
                           dtype=image.dtype,
                           nodata=0) as file:

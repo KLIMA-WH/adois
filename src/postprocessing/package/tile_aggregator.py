@@ -101,6 +101,6 @@ class TileAggregator:
                     polygon_list.append(polygon)
 
         shapes = gpd.GeoDataFrame({'imp_dens': imperviousness_density_list},
-                                  crs={'init': f'epsg:{self.epsg_code}'},
+                                  crs=f'epsg:{self.epsg_code}',
                                   geometry=polygon_list)
         shapes.to_file(str(self.dir_path.parents[0] / 'aggregated' / 'aggregated_tiles.shp'))

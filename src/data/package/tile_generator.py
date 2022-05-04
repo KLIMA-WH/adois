@@ -126,7 +126,7 @@ class TileGenerator:
                         width=self.image_size,
                         height=self.image_size,
                         count=TileGenerator.BANDS,
-                        crs={'init': f'epsg:{self.epsg_code}'},
+                        crs=f'epsg:{self.epsg_code}',
                         transform=transform,
                         dtype=image.dtype,
                         nodata=0) as dataset:
@@ -161,7 +161,7 @@ class TileGenerator:
                           width=self.image_size,
                           height=self.image_size,
                           count=TileGenerator.BANDS,
-                          crs={'init': f'epsg:{self.epsg_code}'},
+                          crs=f'epsg:{self.epsg_code}',
                           transform=transform,
                           dtype=image.dtype,
                           nodata=0) as file:
