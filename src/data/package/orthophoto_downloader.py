@@ -19,7 +19,7 @@ logger_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s: %(
 
 log_dir_path = Path(__file__).parents[1] / 'logs'
 date_time = str(DateTime.now().isoformat(sep='_', timespec='seconds')).replace(':', '-')
-file_handler = logging.FileHandler(filename=log_dir_path / f'{date_time}_tile_generator.log', mode='w')
+file_handler = logging.FileHandler(filename=log_dir_path / f'{date_time}_orthophoto_downloader.log', mode='w')
 file_handler.setFormatter(logger_formatter)
 logger.addHandler(file_handler)
 
@@ -30,8 +30,8 @@ logger.addHandler(console_handler)
 warnings.filterwarnings(action='ignore', message='shapes are outside bounds of raster.')
 
 
-class TileGenerator:
-    """TileGenerator
+class OrthophotoDownloader:
+    """OrthophotoDownloader
     TODO: class documentation
 
     Author: Marius Maryniak (marius.maryniak@w-hs.de)
@@ -76,11 +76,11 @@ class TileGenerator:
         self.layer = layer
         self.epsg_code = epsg_code
         self.resolution = resolution
-        if image_size in TileGenerator.VALID_IMAGE_SIZE:
+        if image_size in OrthophotoDownloader.VALID_IMAGE_SIZE:
             self.image_size = image_size
         else:
             raise ValueError('Invalid image_size! image_size has to be a power of base 2 or its tenfold. Try '
-                             f'{[*TileGenerator.VALID_IMAGE_SIZE]}.')
+                             f'{[*OrthophotoDownloader.VALID_IMAGE_SIZE]}.')
         self.image_size_meters = self.resolution * self.image_size
         self.dir_path = Path(dir_path)
         self.image_name_prefix = image_name_prefix
@@ -97,7 +97,7 @@ class TileGenerator:
             raise ValueError('Invalid non_zero_ratio! non_zero_ratio has to be a value between 0 and 1.')
         (self.dir_path / self.image_name_prefix).mkdir(exist_ok=True)
 
-    def get_tile(self, coordinates):
+    def get_orthophoto(self, coordinates):
         """Returns an image given its coordinates of the top left corner. If necessary, the image is getting masked
         with the shapes of the optional shape file.
 
@@ -125,7 +125,7 @@ class TileGenerator:
                         driver='GTiff',
                         width=self.image_size,
                         height=self.image_size,
-                        count=TileGenerator.BANDS,
+                        count=OrthophotoDownloader.BANDS,
                         crs=f'epsg:{self.epsg_code}',
                         transform=transform,
                         dtype=image.dtype,
@@ -138,11 +138,11 @@ class TileGenerator:
             return image_masked
         return image
 
-    def export_tile(self,
-                    image,
-                    path,
-                    coordinates):
-        """Exports an image from the get_tile() method. If necessary, a world file with georeferencing metadata
+    def export_orthophoto(self,
+                          image,
+                          path,
+                          coordinates):
+        """Exports an image from the get_orthophoto() method. If necessary, a world file with georeferencing metadata
         is created in the same directory as the image itself or georeferencing metadata is embedded into the image.
 
         :param np.ndarray[int] image: image
@@ -160,7 +160,7 @@ class TileGenerator:
                           driver='GTiff',
                           width=self.image_size,
                           height=self.image_size,
-                          count=TileGenerator.BANDS,
+                          count=OrthophotoDownloader.BANDS,
                           crs=f'epsg:{self.epsg_code}',
                           transform=transform,
                           dtype=image.dtype,
@@ -214,19 +214,19 @@ class TileGenerator:
         initial_row = index // columns
         initial_column = index % columns
 
-        non_zero_threshold = self.image_size ** 2 * TileGenerator.BANDS * self.non_zero_ratio
+        non_zero_threshold = self.image_size ** 2 * OrthophotoDownloader.BANDS * self.non_zero_ratio
 
         for row in range(initial_row, rows):
             for column in range(initial_column, columns) if row == initial_row else range(columns):
                 coordinates = (round(bounding_box[0] + column * self.image_size_meters, 2),
                                round(bounding_box[1] + (row + 1) * self.image_size_meters, 2))
-                image = self.get_tile(coordinates=coordinates)
+                image = self.get_orthophoto(coordinates=coordinates)
                 if np.any(image) if self.non_zero_ratio == 0 else np.count_nonzero(image) > non_zero_threshold:
                     image_name = f'{self.image_name_prefix}_{image_id}_{coordinates[0]}_{coordinates[1]}'
                     path = self.dir_path / self.image_name_prefix / f'{image_name}.tiff'
-                    self.export_tile(image=image,
-                                     path=str(path),
-                                     coordinates=coordinates)
+                    self.export_orthophoto(image=image,
+                                           path=str(path),
+                                           coordinates=coordinates)
                     logger.info(f'iteration {index + 1:>{logger_padding_length}} / {iterations} '
                                 f'-> image with id = {image_id} exported')
                     image_id += 1
