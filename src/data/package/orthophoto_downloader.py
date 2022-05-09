@@ -45,6 +45,7 @@ class OrthophotoDownloader:
                  epsg_code,
                  resolution,
                  image_size,
+                 bounding_box,
                  dir_path='',
                  image_name_prefix='',
                  shp_path=None,
@@ -58,6 +59,8 @@ class OrthophotoDownloader:
         :param int epsg_code: epsg code of the coordinate reference system
         :param float resolution: resolution in meters per pixel
         :param int image_size: image size in pixels
+        :param (float, float, float, float) bounding_box: bounding box (x_1, y_1, x_2, y_2)
+            of the area from the bottom left corner to the top right corner
         :param str or Path dir_path: path to the directory
         :param str image_name_prefix: prefix of the image name
         :param str or Path or None shp_path: path to the shape file for masking specific areas
@@ -69,6 +72,7 @@ class OrthophotoDownloader:
         :returns: None
         :rtype: None
         :raises ValueError: if image_size is not valid (not a power of base 2, its tenfold or too small/ large) or
+            if bounding_box is not valid (x_1 >= x_2 or y_1 >= y_2) or
             if non_zero_ratio is not valid (not a value between 0 and 1)
         """
         self.wms_url = wms_url
@@ -76,25 +80,40 @@ class OrthophotoDownloader:
         self.layer = layer
         self.epsg_code = epsg_code
         self.resolution = resolution
+
         if image_size in OrthophotoDownloader.VALID_IMAGE_SIZE:
             self.image_size = image_size
         else:
             raise ValueError('Invalid image_size! image_size has to be a power of base 2 or its tenfold. Try '
                              f'{[*OrthophotoDownloader.VALID_IMAGE_SIZE]}.')
         self.image_size_meters = self.resolution * self.image_size
+
+        if bounding_box[0] < bounding_box[2] or bounding_box[1] < bounding_box[3]:
+            self.bounding_box = (round(bounding_box[0], 2),
+                                 round(bounding_box[1], 2),
+                                 round(bounding_box[2], 2),
+                                 round(bounding_box[3], 2))
+        else:
+            raise ValueError('Invalid bounding_box! x_1 has to be smaller than x_2 and '
+                             'y_1 has to be smaller than y_2.')
+
         self.dir_path = Path(dir_path)
         self.image_name_prefix = image_name_prefix
+
         if shp_path is not None:
             shapes = gpd.read_file(Path(shp_path))
             self.shapes = list((row.geometry for _, row in shapes.iterrows()))
         else:
             self.shapes = None
+
         self.create_wld = create_wld
         self.create_geotiff = create_geotiff
+
         if 0 <= non_zero_ratio <= 1:
             self.non_zero_ratio = non_zero_ratio
         else:
             raise ValueError('Invalid non_zero_ratio! non_zero_ratio has to be a value between 0 and 1.')
+
         (self.dir_path / self.image_name_prefix).mkdir(exist_ok=True)
 
     def get_orthophoto(self, coordinates):
@@ -178,37 +197,24 @@ class OrthophotoDownloader:
                              coordinates=coordinates)
 
     def __call__(self,
-                 bounding_box,
                  index=0,
                  image_id=0):
         """Exports all images of an area given its bounding box to the images directory.
         Each image name consists of the following attributes separated by an underscore:
         'prefix_id_x_y.tiff'
 
-        :param (float, float, float, float) bounding_box: bounding box (x_1, y_1, x_2, y_2)
-            of the area from the bottom left corner to the top right corner
         :param int index: initial index of the iteration through the images
         :param int image_id: initial value of the image ids
         :returns: None
         :rtype: None
-        :raises ValueError: if bounding_box is not valid (x_1 > x_2 or y_1 > y_2)
         """
         start_time = DateTime.now()
 
-        if bounding_box[0] >= bounding_box[2] or bounding_box[1] >= bounding_box[3]:
-            raise ValueError('Invalid bounding_box! x_1 has to be smaller than x_2 and '
-                             'y_1 has to be smaller than y_2.')
-
-        bounding_box = (round(bounding_box[0], 2),
-                        round(bounding_box[1], 2),
-                        round(bounding_box[2], 2),
-                        round(bounding_box[3], 2))
-
-        columns = int((bounding_box[2] - bounding_box[0]) // self.image_size_meters)
-        if (bounding_box[2] - bounding_box[0]) % self.image_size_meters:
+        columns = int((self.bounding_box[2] - self.bounding_box[0]) // self.image_size_meters)
+        if (self.bounding_box[2] - self.bounding_box[0]) % self.image_size_meters:
             columns += 1
-        rows = int((bounding_box[3] - bounding_box[1]) // self.image_size_meters)
-        if (bounding_box[3] - bounding_box[1]) % self.image_size_meters:
+        rows = int((self.bounding_box[3] - self.bounding_box[1]) // self.image_size_meters)
+        if (self.bounding_box[3] - self.bounding_box[1]) % self.image_size_meters:
             rows += 1
         iterations = columns * rows
         logger_padding_length = len(str(iterations))
@@ -220,8 +226,8 @@ class OrthophotoDownloader:
 
         for row in range(initial_row, rows):
             for column in range(initial_column, columns) if row == initial_row else range(columns):
-                coordinates = (round(bounding_box[0] + column * self.image_size_meters, 2),
-                               round(bounding_box[1] + (row + 1) * self.image_size_meters, 2))
+                coordinates = (round(self.bounding_box[0] + column * self.image_size_meters, 2),
+                               round(self.bounding_box[1] + (row + 1) * self.image_size_meters, 2))
                 image = self.get_orthophoto(coordinates=coordinates)
                 if np.any(image) if self.non_zero_ratio == 0 else np.count_nonzero(image) > non_zero_threshold:
                     image_name = f'{self.image_name_prefix}_{image_id}_{coordinates[0]}_{coordinates[1]}.tiff'
@@ -247,7 +253,7 @@ class OrthophotoDownloader:
                     'epsg code': self.epsg_code,
                     'resolution': self.resolution,
                     'image size': self.image_size,
-                    'bounding box': bounding_box,
+                    'bounding box': self.bounding_box,
                     'number of columns': columns,
                     'number of rows': rows,
                     'number of iterations': iterations}
