@@ -212,7 +212,7 @@ class MaskGenerator:
         """Preprocesses the shape file. The preprocessed shape file is saved with the suffix 'preprocessed' in the
         directory of the shape file.
 
-        :param str path: path to the shape file of the mask that needs to be rasterized
+        :param str or Path path: path to the shape file of the mask that needs to be rasterized
         :param str column: name of the column of the class values
         :param dict[int, int] replacement_dict: dictionary of each class value (key) and their mask value (value)
         :param list[int] or None delete_list: list of class values to delete
@@ -220,6 +220,7 @@ class MaskGenerator:
         :rtype: None
         :raises ValueError: if value in replacement_dict is not valid (not a value between 0 and 255)
         """
+        path = Path(path)
         for value in list(replacement_dict.values()):
             if not 0 <= value <= 255:
                 raise ValueError('Invalid value in replacement_dict! '
@@ -232,4 +233,4 @@ class MaskGenerator:
         if delete_list is not None:
             shapes = shapes[~shapes.mask_value.isin(delete_list)]
 
-        shapes.to_file(f'{Path(path).stem}_preprocessed.shp')
+        shapes.to_file(path.parents[0] / Path(f'{path.stem}_preprocessed.shp'))
