@@ -58,9 +58,9 @@ class OrthophotoDownloader:
         :param int epsg_code: epsg code of the coordinate reference system
         :param float resolution: resolution in meters per pixel
         :param int image_size: image size in pixels
-        :param str dir_path: path to the directory
+        :param str or Path dir_path: path to the directory
         :param str image_name_prefix: prefix of the image name
-        :param str or None shp_path: path to the shape file for masking specific areas
+        :param str or Path or None shp_path: path to the shape file for masking specific areas
         :param bool create_wld: if True, a world file is created
         :param bool create_geotiff: if True, georeferencing metadata is embedded into the image
         :param float non_zero_ratio: ratio of pixels with information (pixel value > 0) to all pixels of the image
@@ -85,7 +85,7 @@ class OrthophotoDownloader:
         self.dir_path = Path(dir_path)
         self.image_name_prefix = image_name_prefix
         if shp_path is not None:
-            shapes = gpd.read_file(shp_path)
+            shapes = gpd.read_file(Path(shp_path))
             self.shapes = list((row.geometry for _, row in shapes.iterrows()))
         else:
             self.shapes = None
@@ -146,11 +146,13 @@ class OrthophotoDownloader:
         is created in the same directory as the image itself or georeferencing metadata is embedded into the image.
 
         :param np.ndarray[int] image: image
-        :param str path: path to the image
+        :param str or Path path: path to the image
         :param (float, float) coordinates: coordinates (x, y) of the top left corner
         :returns: None
         :rtype: None
         """
+        path = Path(path)
+
         if self.create_geotiff:
             transform = rio.transform.from_origin(west=coordinates[0],
                                                   north=coordinates[1],
@@ -171,7 +173,7 @@ class OrthophotoDownloader:
             Image.fromarray(np.moveaxis(image, source=0, destination=-1)).save(path)
 
         if self.create_wld:
-            utils.export_wld(path=str(Path(path).with_suffix('.wld')),
+            utils.export_wld(path=path.with_suffix('.wld'),
                              resolution=self.resolution,
                              coordinates=coordinates)
 
@@ -222,10 +224,10 @@ class OrthophotoDownloader:
                                round(bounding_box[1] + (row + 1) * self.image_size_meters, 2))
                 image = self.get_orthophoto(coordinates=coordinates)
                 if np.any(image) if self.non_zero_ratio == 0 else np.count_nonzero(image) > non_zero_threshold:
-                    image_name = f'{self.image_name_prefix}_{image_id}_{coordinates[0]}_{coordinates[1]}'
-                    path = self.dir_path / self.image_name_prefix / f'{image_name}.tiff'
+                    image_name = f'{self.image_name_prefix}_{image_id}_{coordinates[0]}_{coordinates[1]}.tiff'
+                    path = self.dir_path / self.image_name_prefix / image_name
                     self.export_orthophoto(image=image,
-                                           path=str(path),
+                                           path=path,
                                            coordinates=coordinates)
                     logger.info(f'iteration {index + 1:>{logger_padding_length}} / {iterations} '
                                 f'-> image with id = {image_id} exported')
@@ -249,7 +251,7 @@ class OrthophotoDownloader:
                     'number of columns': columns,
                     'number of rows': rows,
                     'number of iterations': iterations}
-        utils.export_metadata(path=str(self.dir_path / f'{self.image_name_prefix}_metadata.json'),
+        utils.export_metadata(path=self.dir_path / f'{self.image_name_prefix}_metadata.json',
                               metadata=metadata)
 
     @staticmethod
