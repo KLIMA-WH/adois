@@ -51,7 +51,7 @@ class MaskGenerator:
         :param str or Path or None shp_path: path to the shape file for masking specific areas
         :param bool multi_class_mask: if True, the pixel value of each rasterized shape equals the value of the column
             mask_value (shape file may need to be preprocessed)
-            if False, the pixel value of the rasterized shapes is 255
+            if False, the pixel value of the rasterized shapes is 1
         :param bool create_wld: if True, a world file is created
         :param bool create_geotiff: if True, georeferencing metadata is embedded into the image
         :returns: None
