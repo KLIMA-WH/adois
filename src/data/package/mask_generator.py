@@ -46,9 +46,9 @@ class MaskGenerator:
                  create_geotiff=False):
         """Constructor method
 
-        :param str metadata_path: path to the metadata file created by TileGenerator
-        :param str mask_shp_path: path to the shape file of the mask that needs to be rasterized
-        :param str shp_path: path to the shape file for masking specific areas
+        :param str or Path metadata_path: path to the metadata file created by TileGenerator
+        :param str or Path mask_shp_path: path to the shape file of the mask that needs to be rasterized
+        :param str or Path or None shp_path: path to the shape file for masking specific areas
         :param bool multi_class_mask: if True, the pixel value of each rasterized shape equals the value of the column
             mask_value (shape file may need to be preprocessed)
             if False, the pixel value of the rasterized shapes is 255
@@ -59,8 +59,9 @@ class MaskGenerator:
         """
         self.metadata_path = Path(metadata_path)
         self.dir_path = self.metadata_path.parents[0]
-        self.mask_shp_path = mask_shp_path
+        self.mask_shp_path = Path(mask_shp_path)
         if shp_path is not None:
+            shp_path = Path(shp_path)
             shapes = gpd.read_file(shp_path)
             self.shapes = list((row.geometry for _, row in shapes.iterrows()))
         else:
@@ -80,10 +81,12 @@ class MaskGenerator:
         """Returns an image of the mask to a corresponding tile. If necessary, the image is getting masked
         with the shapes of the optional shape file.
 
-        :param str path: path to the image of the corresponding tile
+        :param str or Path path: path to the image of the corresponding tile
         :returns: image and coordinates
         :rtype: (np.ndarray[int], (float, float))
         """
+        path = Path(path)
+
         _, _, coordinates = utils.get_image_metadata(path)
         bounding_box = utils.get_bounding_box(coordinates=coordinates,
                                               image_size_meters=self.image_size_meters)
@@ -133,11 +136,13 @@ class MaskGenerator:
         is created in the same directory as the image itself or georeferencing metadata is embedded into the image.
 
         :param np.ndarray[int] image: image
-        :param str path: path to the image
+        :param str or Path path: path to the image
         :param (float, float) coordinates: coordinates (x, y) of the top left corner
         :returns: None
         :rtype: None
         """
+        path = Path(path)
+
         if self.create_geotiff:
             transform = rio.transform.from_origin(west=coordinates[0],
                                                   north=coordinates[1],
@@ -158,7 +163,7 @@ class MaskGenerator:
             Image.fromarray(np.moveaxis(image, source=0, destination=-1)).save(path)
 
         if self.create_wld:
-            utils.export_wld(path=str(Path(path).with_suffix('.wld')),
+            utils.export_wld(path=path.with_suffix('.wld'),
                              resolution=self.resolution,
                              coordinates=coordinates)
 
@@ -179,11 +184,11 @@ class MaskGenerator:
         logger_padding_length = len(str(len(tiles_dir_file_list)))
 
         for index, file in enumerate(tiles_dir_file_list):
-            mask, coordinates = self.get_mask(path=str(tiles_dir_path / file))
+            mask, coordinates = self.get_mask(path=tiles_dir_path / file)
             image_name = Path(file).stem
             mask_name = f"mask_{'_'.join(image_name.split('_')[-3:])}.tiff"
             self.export_mask(image=mask,
-                             path=str(self.dir_path / 'mask' / mask_name),
+                             path=self.dir_path / 'mask' / mask_name,
                              coordinates=coordinates)
             logger.info(f'iteration {index + 1:>{logger_padding_length}} / {iterations} '
                         f'-> mask with id = {index} exported')
@@ -201,7 +206,7 @@ class MaskGenerator:
                     'number of columns': self.metadata.get('number of columns'),
                     'number of rows': self.metadata.get('number of rows'),
                     'number of iterations': self.metadata.get('number of iterations')}
-        utils.export_metadata(path=str(self.dir_path / 'mask_metadata.json'),
+        utils.export_metadata(path=self.dir_path / 'mask_metadata.json',
                               metadata=metadata)
 
     @staticmethod
@@ -221,6 +226,7 @@ class MaskGenerator:
         :raises ValueError: if value in replacement_dict is not valid (not a value between 0 and 255)
         """
         path = Path(path)
+
         for value in list(replacement_dict.values()):
             if not 0 <= value <= 255:
                 raise ValueError('Invalid value in replacement_dict! '
@@ -233,4 +239,4 @@ class MaskGenerator:
         if delete_list is not None:
             shapes = shapes[~shapes.mask_value.isin(delete_list)]
 
-        shapes.to_file(path.parents[0] / Path(f'{path.stem}_preprocessed.shp'))
+        shapes.to_file(path.parents[0] / f'{path.stem}_preprocessed.shp')
