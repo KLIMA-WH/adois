@@ -19,7 +19,7 @@ logger_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s: %(
 
 log_dir_path = Path(__file__).parents[1] / 'logs'
 date_time = str(DateTime.now().isoformat(sep='_', timespec='seconds')).replace(':', '-')
-file_handler = logging.FileHandler(filename=log_dir_path / f'{date_time}_orthophoto_downloader.log', mode='w')
+file_handler = logging.FileHandler(log_dir_path / f'{date_time}_orthophoto_downloader.log', mode='w')
 file_handler.setFormatter(logger_formatter)
 logger.addHandler(file_handler)
 
@@ -101,8 +101,9 @@ class OrthophotoDownloader:
         self.image_name_prefix = image_name_prefix
 
         if shp_path is not None:
-            shapes = gpd.read_file(Path(shp_path))
-            self.shapes = list((row.geometry for _, row in shapes.iterrows()))
+            shp_path = Path(shp_path)
+            shapes = gpd.read_file(shp_path)
+            self.shapes = [row.geometry for _, row in shapes.iterrows()]
         else:
             self.shapes = None
 
@@ -132,7 +133,9 @@ class OrthophotoDownloader:
                                    format='image/tiff',
                                    size=(self.image_size, self.image_size),
                                    bgcolor='#000000')
-        image = np.moveaxis(np.array(Image.open(BytesIO(response.read()))), source=-1, destination=0)
+        image = np.moveaxis(np.array(Image.open(BytesIO(response.read()))),
+                            source=-1,
+                            destination=0)
 
         if self.shapes is not None:
             transform = rio.transform.from_origin(west=coordinates[0],
@@ -140,15 +143,14 @@ class OrthophotoDownloader:
                                                   xsize=self.resolution,
                                                   ysize=self.resolution)
             with rio.io.MemoryFile() as memory_file:
-                with memory_file.open(
-                        driver='GTiff',
-                        width=self.image_size,
-                        height=self.image_size,
-                        count=OrthophotoDownloader.BANDS,
-                        crs=f'epsg:{self.epsg_code}',
-                        transform=transform,
-                        dtype=image.dtype,
-                        nodata=0) as dataset:
+                with memory_file.open(driver='GTiff',
+                                      width=self.image_size,
+                                      height=self.image_size,
+                                      count=OrthophotoDownloader.BANDS,
+                                      crs=f'epsg:{self.epsg_code}',
+                                      transform=transform,
+                                      dtype=image.dtype,
+                                      nodata=0) as dataset:
                     dataset.write(image)
                 with memory_file.open() as dataset:
                     image_masked, _ = rio.mask.mask(dataset=dataset,
@@ -177,7 +179,8 @@ class OrthophotoDownloader:
                                                   north=coordinates[1],
                                                   xsize=self.resolution,
                                                   ysize=self.resolution)
-            with rio.open(path, 'w',
+            with rio.open(path,
+                          mode='w',
                           driver='GTiff',
                           width=self.image_size,
                           height=self.image_size,
@@ -189,10 +192,12 @@ class OrthophotoDownloader:
                 file.write(image)
         else:
             # noinspection PyTypeChecker
-            Image.fromarray(np.moveaxis(image, source=0, destination=-1)).save(path)
+            Image.fromarray(np.moveaxis(image,
+                                        source=0,
+                                        destination=-1)).save(path)
 
         if self.create_wld:
-            utils.export_wld(path=path.with_suffix('.wld'),
+            utils.export_wld(path.with_suffix('.wld'),
                              resolution=self.resolution,
                              coordinates=coordinates)
 
@@ -228,11 +233,11 @@ class OrthophotoDownloader:
             for column in range(initial_column, columns) if row == initial_row else range(columns):
                 coordinates = (round(self.bounding_box[0] + column * self.image_size_meters, 2),
                                round(self.bounding_box[1] + (row + 1) * self.image_size_meters, 2))
-                image = self.get_orthophoto(coordinates=coordinates)
+                image = self.get_orthophoto(coordinates)
                 if np.any(image) if self.non_zero_ratio == 0 else np.count_nonzero(image) > non_zero_threshold:
                     image_name = f'{self.image_name_prefix}_{image_id}_{coordinates[0]}_{coordinates[1]}.tiff'
                     path = self.dir_path / self.image_name_prefix / image_name
-                    self.export_orthophoto(image=image,
+                    self.export_orthophoto(image,
                                            path=path,
                                            coordinates=coordinates)
                     logger.info(f'iteration {index + 1:>{logger_padding_length}} / {iterations} '
@@ -244,7 +249,7 @@ class OrthophotoDownloader:
                 index += 1
 
         end_time = DateTime.now()
-        delta = utils.chop_microseconds(delta=end_time - start_time)
+        delta = utils.chop_microseconds(end_time - start_time)
 
         metadata = {'timestamp': str(DateTime.now().isoformat(sep=' ', timespec='seconds')),
                     'execution time': str(delta),
@@ -257,7 +262,7 @@ class OrthophotoDownloader:
                     'number of columns': columns,
                     'number of rows': rows,
                     'number of iterations': iterations}
-        utils.export_metadata(path=self.dir_path / f'{self.image_name_prefix}_metadata.json',
+        utils.export_metadata(self.dir_path / f'{self.image_name_prefix}_metadata.json',
                               metadata=metadata)
 
     @staticmethod
