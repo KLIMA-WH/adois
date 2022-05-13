@@ -51,7 +51,8 @@ class OrthophotoDownloader:
                  shp_path=None,
                  create_wld=False,
                  create_geotiff=False,
-                 non_zero_ratio=.25):
+                 non_zero_ratio=.25,
+                 additional_info=None):
         """Constructor method
 
         :param str or Path dir_path: path to the directory
@@ -69,6 +70,7 @@ class OrthophotoDownloader:
         :param float non_zero_ratio: ratio of pixels with information (pixel value > 0) to all pixels of the image
             (export filter: if the pixels with information are below the threshold of the non_zero_ratio,
             the image is skipped)
+        :param str or None additional_info: additional info for metadata
         :returns: None
         :rtype: None
         :raises ValueError: if image_size is not valid (not a power of base 2, its tenfold or too small/ large) or
@@ -114,6 +116,7 @@ class OrthophotoDownloader:
         else:
             raise ValueError('Invalid non_zero_ratio! non_zero_ratio has to be a value between 0 and 1.')
 
+        self.additional_info = additional_info
         (self.dir_path / self.image_name).mkdir(exist_ok=True)
 
     def get_orthophoto(self, coordinates):
@@ -265,6 +268,8 @@ class OrthophotoDownloader:
                     'number of rows': rows,
                     'number of iterations': iterations,
                     'number of images': image_id}
+        if self.additional_info is not None:
+            metadata['additional info'] = self.additional_info
         utils.export_metadata(self.dir_path / f'{self.image_name}_metadata.json',
                               metadata=metadata)
         utils.export_metadata(self.dir_path / f'{self.image_name}_coordinates.json',

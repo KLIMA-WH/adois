@@ -47,7 +47,8 @@ class MaskGenerator:
                  shp_path=None,
                  multi_class_mask=False,
                  create_wld=False,
-                 create_geotiff=False):
+                 create_geotiff=False,
+                 additional_info=None):
         """Constructor method
 
         :param str or Path dir_path: path to the directory
@@ -63,6 +64,7 @@ class MaskGenerator:
             if False, the pixel value of the rasterized shapes is 1
         :param bool create_wld: if True, a world file is created
         :param bool create_geotiff: if True, georeferencing metadata is embedded into the image
+        :param str or None additional_info: additional info for metadata
         :returns: None
         :rtype: None
         """
@@ -85,6 +87,7 @@ class MaskGenerator:
         self.multi_class_mask = multi_class_mask
         self.create_wld = create_wld
         self.create_geotiff = create_geotiff
+        self.additional_info = additional_info
         (self.dir_path / self.mask_name).mkdir(exist_ok=True)
 
     def get_mask(self, path):
@@ -217,6 +220,8 @@ class MaskGenerator:
                     'image size': self.image_size,
                     'multi class mask': self.multi_class_mask,
                     'number of iterations/ images': iterations}
+        if self.additional_info is not None:
+            metadata['additional info'] = self.additional_info
         utils.export_metadata(self.dir_path / f'{self.mask_name}_metadata.json',
                               metadata=metadata)
 
