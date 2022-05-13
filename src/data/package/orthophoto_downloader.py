@@ -41,13 +41,13 @@ class OrthophotoDownloader:
 
     def __init__(self,
                  dir_path,
+                 image_name,
                  wms_url,
                  layer,
                  epsg_code,
                  resolution,
                  image_size,
                  bounding_box,
-                 image_name_prefix='',
                  shp_path=None,
                  create_wld=False,
                  create_geotiff=False,
@@ -55,6 +55,7 @@ class OrthophotoDownloader:
         """Constructor method
 
         :param str or Path dir_path: path to the directory
+        :param str image_name: prefix of the image name
         :param str wms_url: url of the web map service
         :param str layer: name of the layer
         :param int epsg_code: epsg code of the coordinate reference system
@@ -62,7 +63,6 @@ class OrthophotoDownloader:
         :param int image_size: image size in pixels
         :param (float, float, float, float) bounding_box: bounding box (x_1, y_1, x_2, y_2)
             of the area from the bottom left corner to the top right corner
-        :param str image_name_prefix: prefix of the image name
         :param str or Path or None shp_path: path to the shape file for masking specific areas
         :param bool create_wld: if True, a world file is created
         :param bool create_geotiff: if True, georeferencing metadata is embedded into the image
@@ -76,6 +76,7 @@ class OrthophotoDownloader:
             if non_zero_ratio is not valid (not a value between 0 and 1)
         """
         self.dir_path = Path(dir_path)
+        self.image_name = image_name
         self.wms_url = wms_url
         self.wms = WebMapService(self.wms_url)
         self.layer = layer
@@ -98,8 +99,6 @@ class OrthophotoDownloader:
             raise ValueError('Invalid bounding_box! x_1 has to be smaller than x_2 and '
                              'y_1 has to be smaller than y_2.')
 
-        self.image_name_prefix = image_name_prefix
-
         if shp_path is not None:
             shp_path = Path(shp_path)
             shapes = gpd.read_file(shp_path)
@@ -115,7 +114,7 @@ class OrthophotoDownloader:
         else:
             raise ValueError('Invalid non_zero_ratio! non_zero_ratio has to be a value between 0 and 1.')
 
-        (self.dir_path / self.image_name_prefix).mkdir(exist_ok=True)
+        (self.dir_path / self.image_name).mkdir(exist_ok=True)
 
     def get_orthophoto(self, coordinates):
         """Returns an image given its coordinates of the top left corner. If necessary, the image is getting masked
@@ -237,8 +236,8 @@ class OrthophotoDownloader:
                                round(self.bounding_box[1] + (row + 1) * self.image_size_meters, 2))
                 image = self.get_orthophoto(coordinates)
                 if np.any(image) if self.non_zero_ratio == 0 else np.count_nonzero(image) > non_zero_threshold:
-                    image_name = f'{self.image_name_prefix}_{image_id}_{coordinates[0]}_{coordinates[1]}.tiff'
-                    path = self.dir_path / self.image_name_prefix / image_name
+                    image_name = f'{self.image_name}_{image_id}_{coordinates[0]}_{coordinates[1]}.tiff'
+                    path = self.dir_path / self.image_name / image_name
                     self.export_orthophoto(image,
                                            path=path,
                                            coordinates=coordinates)
@@ -266,9 +265,9 @@ class OrthophotoDownloader:
                     'number of rows': rows,
                     'number of iterations': iterations,
                     'number of images': image_id}
-        utils.export_metadata(self.dir_path / f'{self.image_name_prefix}_metadata.json',
+        utils.export_metadata(self.dir_path / f'{self.image_name}_metadata.json',
                               metadata=metadata)
-        utils.export_metadata(self.dir_path / f'{self.image_name_prefix}_coordinates.json',
+        utils.export_metadata(self.dir_path / f'{self.image_name}_coordinates.json',
                               metadata=metadata_coordinates)
 
     @staticmethod
