@@ -229,6 +229,8 @@ class OrthophotoDownloader:
 
         non_zero_threshold = self.image_size ** 2 * OrthophotoDownloader.BANDS * self.non_zero_ratio
 
+        metadata_coordinates = {}
+
         for row in range(initial_row, rows):
             for column in range(initial_column, columns) if row == initial_row else range(columns):
                 coordinates = (round(self.bounding_box[0] + column * self.image_size_meters, 2),
@@ -240,6 +242,7 @@ class OrthophotoDownloader:
                     self.export_orthophoto(image,
                                            path=path,
                                            coordinates=coordinates)
+                    metadata_coordinates[image_id] = coordinates
                     logger.info(f'iteration {index + 1:>{logger_padding_length}} / {iterations} '
                                 f'-> image with id = {image_id} exported')
                     image_id += 1
@@ -261,9 +264,12 @@ class OrthophotoDownloader:
                     'bounding box': self.bounding_box,
                     'number of columns': columns,
                     'number of rows': rows,
-                    'number of iterations': iterations}
+                    'number of iterations': iterations,
+                    'number of images': image_id}
         utils.export_metadata(self.dir_path / f'{self.image_name_prefix}_metadata.json',
                               metadata=metadata)
+        utils.export_metadata(self.dir_path / f'{self.image_name_prefix}_coordinates.json',
+                              metadata=metadata_coordinates)
 
     @staticmethod
     def print_info(wms_url):
