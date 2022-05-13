@@ -1,4 +1,3 @@
-import json
 import logging
 from datetime import datetime as DateTime  # PEP 8 compliant
 from pathlib import Path
@@ -38,16 +37,26 @@ class MaskGenerator:
     BANDS = 1
 
     def __init__(self,
-                 metadata_path,
+                 dir_path,
+                 mask_name,
+                 orthophotos_dir_path,
                  mask_shp_path,
+                 epsg_code,
+                 resolution,
+                 image_size,
                  shp_path=None,
                  multi_class_mask=False,
                  create_wld=False,
                  create_geotiff=False):
         """Constructor method
 
-        :param str or Path metadata_path: path to the metadata file created by TileGenerator
+        :param str or Path dir_path: path to the directory
+        :param str mask_name: prefix of the mask name
+        :param str or Path orthophotos_dir_path: path to the directory of the orthophotos
         :param str or Path mask_shp_path: path to the shape file of the mask that needs to be rasterized
+        :param int epsg_code: epsg code of the coordinate reference system
+        :param float resolution: resolution in meters per pixel
+        :param int image_size: image size in pixels
         :param str or Path or None shp_path: path to the shape file for masking specific areas
         :param bool multi_class_mask: if True, the pixel value of each rasterized shape equals the value of the column
             mask_value (shape file may need to be preprocessed)
@@ -57,37 +66,38 @@ class MaskGenerator:
         :returns: None
         :rtype: None
         """
-        self.metadata_path = Path(metadata_path)
-        self.dir_path = self.metadata_path.parents[0]
+        self.dir_path = Path(dir_path)
+        self.mask_name = mask_name
+        self.orthophotos_dir_path = Path(orthophotos_dir_path)
         self.mask_shp_path = Path(mask_shp_path)
+        self.epsg_code = epsg_code
+        self.resolution = resolution
+        self.image_size = image_size
+        self.image_size_meters = self.resolution * self.image_size
+
         if shp_path is not None:
             shp_path = Path(shp_path)
             shapes = gpd.read_file(shp_path)
             self.shapes = [row.geometry for _, row in shapes.iterrows()]
         else:
             self.shapes = None
+
         self.multi_class_mask = multi_class_mask
         self.create_wld = create_wld
         self.create_geotiff = create_geotiff
-        with open(self.metadata_path, mode='r') as file:
-            self.metadata = json.load(file)
-        self.epsg_code = self.metadata.get('epsg code')
-        self.resolution = self.metadata.get('resolution')
-        self.image_size = self.metadata.get('image size')
-        self.image_size_meters = self.resolution * self.image_size
-        (self.dir_path / 'mask').mkdir(exist_ok=True)
+        (self.dir_path / self.mask_name).mkdir(exist_ok=True)
 
     def get_mask(self, path):
-        """Returns an image of the mask to a corresponding tile. If necessary, the image is getting masked
+        """Returns an image of the mask to a corresponding orthophoto. If necessary, the image is getting masked
         with the shapes of the optional shape file.
 
-        :param str or Path path: path to the image of the corresponding tile
-        :returns: image and coordinates
-        :rtype: (np.ndarray[int], (float, float))
+        :param str or Path path: path to the image of the corresponding orthophoto
+        :returns: image, id and coordinates
+        :rtype: (np.ndarray[int], int, (float, float))
         """
         path = Path(path)
 
-        _, _, coordinates = utils.get_image_metadata(path)
+        _, image_id, coordinates = utils.get_image_metadata(path)
         bounding_box = utils.get_bounding_box(coordinates=coordinates,
                                               image_size_meters=self.image_size_meters)
 
@@ -128,8 +138,8 @@ class MaskGenerator:
                     mask_masked, _ = rio.mask.mask(dataset=dataset,
                                                    shapes=self.shapes,
                                                    crop=False)
-            return mask_masked, coordinates
-        return mask, coordinates
+            return mask_masked, image_id, coordinates
+        return mask, image_id, coordinates
 
     def export_mask(self,
                     image,
@@ -183,18 +193,16 @@ class MaskGenerator:
         """
         start_time = DateTime.now()
 
-        image_name_prefix = '_'.join(self.metadata_path.stem.split('_')[:-1])
-        tiles_dir_path = self.dir_path / image_name_prefix
-        tiles_dir_file_list = natsorted([x.name for x in tiles_dir_path.iterdir() if x.suffix == '.tiff'])
-        iterations = len(tiles_dir_file_list)
-        logger_padding_length = len(str(len(tiles_dir_file_list)))
+        orthophotos = natsorted([x.name for x in self.orthophotos_dir_path.iterdir() if x.suffix == '.tiff'])
+        iterations = len(orthophotos)
+        logger_padding_length = len(str(len(orthophotos)))
 
-        for index, file in enumerate(tiles_dir_file_list):
-            mask, coordinates = self.get_mask(tiles_dir_path / file)
-            image_name = Path(file).stem
-            mask_name = f"mask_{'_'.join(image_name.split('_')[-3:])}.tiff"
+        for index, file in enumerate(orthophotos):
+            mask, image_id, coordinates = self.get_mask(self.orthophotos_dir_path / file)
+            mask_name = f'{self.mask_name}_{image_id}_{coordinates[0]}_{coordinates[1]}.tiff'
+            path = self.dir_path / self.mask_name / mask_name
             self.export_mask(mask,
-                             path=self.dir_path / 'mask' / mask_name,
+                             path=path,
                              coordinates=coordinates)
             logger.info(f'iteration {index + 1:>{logger_padding_length}} / {iterations} '
                         f'-> mask with id = {index} exported')
@@ -204,15 +212,12 @@ class MaskGenerator:
 
         metadata = {'timestamp': str(DateTime.now().isoformat(sep=' ', timespec='seconds')),
                     'execution time': str(delta),
-                    'multi class mask': self.multi_class_mask,
                     'epsg code': self.epsg_code,
                     'resolution': self.resolution,
                     'image size': self.image_size,
-                    'bounding box': self.metadata.get('bounding box'),
-                    'number of columns': self.metadata.get('number of columns'),
-                    'number of rows': self.metadata.get('number of rows'),
-                    'number of iterations': self.metadata.get('number of iterations')}
-        utils.export_metadata(self.dir_path / 'mask_metadata.json',
+                    'multi class mask': self.multi_class_mask,
+                    'number of iterations/ images': iterations}
+        utils.export_metadata(self.dir_path / f'{self.mask_name}_metadata.json',
                               metadata=metadata)
 
     @staticmethod
