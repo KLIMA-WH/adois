@@ -34,7 +34,7 @@ class RecordGenerator:
     def __init__(self, dir_path):
         """Constructor method
 
-        :param str dir_path: path to the directory
+        :param str or Path dir_path: path to the directory
         :returns: None
         :rtype: None
         """
@@ -99,10 +99,12 @@ class RecordGenerator:
         :param np.ndarray[int] rgb_image: rgb image
         :param np.ndarray[int] nir_image: nir image
         :param np.ndarray[int] mask: mask
-        :param str path: path to the record
+        :param str or Path path: path to the record
         :returns: None
         :rtype: None
         """
+        path = str(path)
+
         with tf.io.TFRecordWriter(path) as writer:
             example = RecordGenerator.get_example(rgb_image=rgb_image, nir_image=nir_image, mask=mask)
             writer.write(example.SerializeToString())
@@ -138,7 +140,7 @@ class RecordGenerator:
                     RecordGenerator.export_record(rgb_image=rgb_image,
                                                   nir_image=nir_image,
                                                   mask=mask,
-                                                  path=str(path))
+                                                  path=path)
                     logger.info(f'iteration {index + 1:>{logger_padding_length}} / {iterations} '
                                 f'-> record with id = {index} exported')
                 else:
