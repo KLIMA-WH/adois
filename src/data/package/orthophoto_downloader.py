@@ -40,13 +40,13 @@ class OrthophotoDownloader:
     BANDS = 3
 
     def __init__(self,
+                 dir_path,
                  wms_url,
                  layer,
                  epsg_code,
                  resolution,
                  image_size,
                  bounding_box,
-                 dir_path='',
                  image_name_prefix='',
                  shp_path=None,
                  create_wld=False,
@@ -54,6 +54,7 @@ class OrthophotoDownloader:
                  non_zero_ratio=.25):
         """Constructor method
 
+        :param str or Path dir_path: path to the directory
         :param str wms_url: url of the web map service
         :param str layer: name of the layer
         :param int epsg_code: epsg code of the coordinate reference system
@@ -61,7 +62,6 @@ class OrthophotoDownloader:
         :param int image_size: image size in pixels
         :param (float, float, float, float) bounding_box: bounding box (x_1, y_1, x_2, y_2)
             of the area from the bottom left corner to the top right corner
-        :param str or Path dir_path: path to the directory
         :param str image_name_prefix: prefix of the image name
         :param str or Path or None shp_path: path to the shape file for masking specific areas
         :param bool create_wld: if True, a world file is created
@@ -75,6 +75,7 @@ class OrthophotoDownloader:
             if bounding_box is not valid (x_1 >= x_2 or y_1 >= y_2) or
             if non_zero_ratio is not valid (not a value between 0 and 1)
         """
+        self.dir_path = Path(dir_path)
         self.wms_url = wms_url
         self.wms = WebMapService(self.wms_url)
         self.layer = layer
@@ -97,7 +98,6 @@ class OrthophotoDownloader:
             raise ValueError('Invalid bounding_box! x_1 has to be smaller than x_2 and '
                              'y_1 has to be smaller than y_2.')
 
-        self.dir_path = Path(dir_path)
         self.image_name_prefix = image_name_prefix
 
         if shp_path is not None:
