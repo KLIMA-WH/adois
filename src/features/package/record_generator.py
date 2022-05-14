@@ -36,7 +36,7 @@ class RecordGenerator:
                  record_name,
                  rgb_dir_path,
                  nir_dir_path,
-                 mask_dir_path,
+                 masks_dir_path,
                  additional_info=None):
         """Constructor method
 
@@ -44,7 +44,7 @@ class RecordGenerator:
         :param str record_name: prefix of the record name
         :param str or Path rgb_dir_path: path to the directory of the rgb images
         :param str or Path nir_dir_path: path to the directory of the nir images
-        :param str or Path mask_dir_path: path to the directory of the masks
+        :param str or Path masks_dir_path: path to the directory of the masks
         :param str or None additional_info: additional info for metadata
         :returns: None
         :rtype: None
@@ -53,7 +53,7 @@ class RecordGenerator:
         self.record_name = record_name
         self.rgb_dir_path = Path(rgb_dir_path)
         self.nir_dir_path = Path(nir_dir_path)
-        self.mask_dir_path = Path(mask_dir_path)
+        self.masks_dir_path = Path(masks_dir_path)
         self.additional_info = additional_info
         (self.dir_path / self.record_name).mkdir(exist_ok=True)
 
@@ -145,7 +145,7 @@ class RecordGenerator:
 
         rgb_images = natsorted([x.name for x in self.rgb_dir_path.iterdir() if x.suffix == '.tiff'])
         nir_images = natsorted([x.name for x in self.nir_dir_path.iterdir() if x.suffix == '.tiff'])
-        masks = natsorted([x.name for x in self.mask_dir_path.iterdir() if x.suffix == '.tiff'])
+        masks = natsorted([x.name for x in self.masks_dir_path.iterdir() if x.suffix == '.tiff'])
         iterations = len(rgb_images)
         logger_padding_length = len(str(len(rgb_images)))
 
@@ -158,7 +158,7 @@ class RecordGenerator:
                         rgb_coordinates == nir_coordinates == mask_coordinates):
                     rgb_image = np.array(Image.open(self.rgb_dir_path / rgb_images[index]))
                     nir_image = np.array(Image.open(self.nir_dir_path / nir_images[index]))
-                    mask = np.array(Image.open(self.mask_dir_path / masks[index]))
+                    mask = np.array(Image.open(self.masks_dir_path / masks[index]))
                     record_name = f'{rgb_id}_{rgb_coordinates[0]}_{rgb_coordinates[1]}.tfrecord'
                     path = self.dir_path / self.record_name / record_name
                     RecordGenerator.export_record(rgb_image=rgb_image,
@@ -181,7 +181,7 @@ class RecordGenerator:
                     'execution time': str(delta),
                     'rgb images dir': self.rgb_dir_path.stem,
                     'nir images dir': self.nir_dir_path.stem,
-                    'masks dir': self.mask_dir_path.stem,
+                    'masks dir': self.masks_dir_path.stem,
                     'number of iterations/ records': iterations}
         if self.additional_info is not None:
             metadata['additional info'] = self.additional_info
