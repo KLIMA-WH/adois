@@ -256,7 +256,7 @@ class OrthophotoDownloader:
         end_time = DateTime.now()
         delta = utils.chop_microseconds(end_time - start_time)
 
-        metadata = {'timestamp': str(DateTime.now().isoformat(sep=' ', timespec='seconds')),
+        metadata = {'timestamp': str(end_time.isoformat(sep=' ', timespec='seconds')),
                     'execution time': str(delta),
                     'wms url': self.wms_url,
                     'layer': self.layer,
