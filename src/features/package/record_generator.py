@@ -15,7 +15,7 @@ logger_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s: %(
 
 log_dir_path = Path(__file__).parents[1] / 'logs'
 date_time = str(DateTime.now().isoformat(sep='_', timespec='seconds')).replace(':', '-')
-file_handler = logging.FileHandler(filename=log_dir_path / f'{date_time}_record_generator.log', mode='w')
+file_handler = logging.FileHandler(log_dir_path / f'{date_time}_record_generator.log', mode='w')
 file_handler.setFormatter(logger_formatter)
 logger.addHandler(file_handler)
 
@@ -55,9 +55,13 @@ class RecordGenerator:
         :raises ValueError: if the dimensions of the nir image are not valid (not a value of 2 or 3)
         """
         if nir_image.ndim == 2:
-            return np.concatenate((rgb_image, np.expand_dims(nir_image, axis=-1)), axis=-1)
+            rgbi_image = np.concatenate((rgb_image, np.expand_dims(nir_image, axis=-1)),
+                                        axis=-1)
+            return rgbi_image
         elif nir_image.ndim == 3:
-            return np.concatenate((rgb_image, np.expand_dims(nir_image[..., 0], axis=-1)), axis=-1)
+            rgbi_image = np.concatenate((rgb_image, np.expand_dims(nir_image[..., 0], axis=-1)),
+                                        axis=-1)
+            return rgbi_image
         else:
             raise ValueError('Invalid dimensions of the nir image! The dimensions of the nir_image have to be '
                              'a value of 2 or 3.')
@@ -84,10 +88,12 @@ class RecordGenerator:
         :returns: example
         :rtype: tf.train.Example
         """
-        image = RecordGenerator.concatenate_to_rgbi(rgb_image=rgb_image, nir_image=nir_image)
-        feature = {'image': RecordGenerator.get_tensor_feature(tf.cast(image, tf.uint8)),
-                   'mask': RecordGenerator.get_tensor_feature(tf.cast(mask, tf.uint8))}
-        return tf.train.Example(features=tf.train.Features(feature=feature))
+        image = RecordGenerator.concatenate_to_rgbi(rgb_image=rgb_image,
+                                                    nir_image=nir_image)
+        feature = {'image': RecordGenerator.get_tensor_feature(tf.cast(image, dtype=tf.uint8)),
+                   'mask': RecordGenerator.get_tensor_feature(tf.cast(mask, dtype=tf.uint8))}
+        example = tf.train.Example(features=tf.train.Features(feature=feature))
+        return example
 
     @staticmethod
     def export_record(rgb_image,
@@ -106,7 +112,9 @@ class RecordGenerator:
         path = str(path)
 
         with tf.io.TFRecordWriter(path) as writer:
-            example = RecordGenerator.get_example(rgb_image=rgb_image, nir_image=nir_image, mask=mask)
+            example = RecordGenerator.get_example(rgb_image=rgb_image,
+                                                  nir_image=nir_image,
+                                                  mask=mask)
             writer.write(example.SerializeToString())
 
     def __call__(self):
