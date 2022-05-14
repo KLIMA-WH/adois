@@ -135,9 +135,10 @@ class OrthophotoDownloader:
                                    format='image/tiff',
                                    size=(self.image_size, self.image_size),
                                    bgcolor='#000000')
-        image = np.moveaxis(np.array(Image.open(BytesIO(response.read()))),
-                            source=-1,
-                            destination=0)
+        with Image.open(BytesIO(response.read())) as file:
+            image = np.moveaxis(np.array(file),
+                                source=-1,
+                                destination=0)
 
         if self.shapes is not None:
             transform = rio.transform.from_origin(west=coordinates[0],

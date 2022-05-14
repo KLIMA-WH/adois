@@ -150,15 +150,18 @@ class RecordGenerator:
         logger_padding_length = len(str(len(rgb_images)))
 
         if len(rgb_images) == len(nir_images) == len(masks):
-            for index, file in enumerate(rgb_images):
+            for index, image in enumerate(rgb_images):
                 _, rgb_id, rgb_coordinates = utils.get_image_metadata(rgb_images[index])
                 _, nir_id, nir_coordinates = utils.get_image_metadata(nir_images[index])
                 _, mask_id, mask_coordinates = utils.get_image_metadata(masks[index])
                 if (rgb_id == nir_id == mask_id == index and
                         rgb_coordinates == nir_coordinates == mask_coordinates):
-                    rgb_image = np.array(Image.open(self.rgb_dir_path / rgb_images[index]))
-                    nir_image = np.array(Image.open(self.nir_dir_path / nir_images[index]))
-                    mask = np.array(Image.open(self.masks_dir_path / masks[index]))
+                    with Image.open(self.rgb_dir_path / rgb_images[index]) as file:
+                        rgb_image = np.array(file)
+                    with Image.open(self.nir_dir_path / nir_images[index]) as file:
+                        nir_image = np.array(file)
+                    with Image.open(self.masks_dir_path / masks[index]) as file:
+                        mask = np.array(file)
                     record_name = f'{self.record_name}_{rgb_id}_{rgb_coordinates[0]}_{rgb_coordinates[1]}.tfrecord'
                     path = self.dir_path / self.record_name / record_name
                     RecordGenerator.export_record(rgb_image=rgb_image,
