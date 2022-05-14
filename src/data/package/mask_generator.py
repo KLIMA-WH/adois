@@ -228,31 +228,31 @@ class MaskGenerator:
     @staticmethod
     def preprocess_mask_shp(path,
                             column,
-                            replacement_dict,
-                            delete_list=None):
+                            replace,
+                            delete=None):
         """Preprocesses the shape file. The preprocessed shape file is saved with the suffix 'preprocessed' in the
         directory of the shape file.
 
         :param str or Path path: path to the shape file of the mask that needs to be rasterized
         :param str column: name of the column of the class values
-        :param dict[int, int] replacement_dict: dictionary of each class value (key) and their mask value (value)
-        :param list[int] or None delete_list: list of class values to delete
+        :param dict[int, int] replace: dictionary of each class value (key) and their mask value (value)
+        :param list[int] or None delete: list of class values to delete
         :returns: None
         :rtype: None
         :raises ValueError: if value in replacement_dict is not valid (not a value between 0 and 255)
         """
         path = Path(path)
 
-        for value in list(replacement_dict.values()):
+        for value in list(replace.values()):
             if not 0 <= value <= 255:
                 raise ValueError('Invalid value in replacement_dict! '
                                  'Values in replacement_dict have to be values between 0 and 255.')
 
         shapes = gpd.read_file(path)
         shapes['mask_value'] = shapes[column]
-        shapes.replace({'mask_value': replacement_dict}, inplace=True)
+        shapes.replace({'mask_value': replace}, inplace=True)
 
-        if delete_list is not None:
-            shapes = shapes[~shapes.mask_value.isin(delete_list)]
+        if delete is not None:
+            shapes = shapes[~shapes.mask_value.isin(delete)]
 
         shapes.to_file(path.parents[0] / f'{path.stem}_preprocessed.shp')
