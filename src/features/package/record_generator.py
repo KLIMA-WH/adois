@@ -31,18 +31,28 @@ class RecordGenerator:
     Author: Marius Maryniak (marius.maryniak@w-hs.de)
     """
 
-    def __init__(self, dir_path):
+    def __init__(self,
+                 dir_path,
+                 record_name,
+                 rgb_dir_path,
+                 nir_dir_path,
+                 mask_dir_path):
         """Constructor method
 
         :param str or Path dir_path: path to the directory
+        :param str record_name: prefix of the record name
+        :param str or Path rgb_dir_path: path to the directory of the rgb images
+        :param str or Path nir_dir_path: path to the directory of the nir images
+        :param str or Path mask_dir_path: path to the directory of the masks
         :returns: None
         :rtype: None
         """
         self.dir_path = Path(dir_path)
-        self.rgb_dir_path = self.dir_path / 'rgb'
-        self.nir_dir_path = self.dir_path / 'nir'
-        self.mask_dir_path = self.dir_path / 'mask'
-        (self.dir_path / 'records').mkdir(exist_ok=True)
+        self.record_name = record_name
+        self.rgb_dir_path = Path(rgb_dir_path)
+        self.nir_dir_path = Path(nir_dir_path)
+        self.mask_dir_path = Path(mask_dir_path)
+        (self.dir_path / self.record_name).mkdir(exist_ok=True)
 
     @staticmethod
     def concatenate_to_rgbi(rgb_image, nir_image):
@@ -144,7 +154,8 @@ class RecordGenerator:
                     rgb_image = np.array(Image.open(self.rgb_dir_path / rgb_images[index]))
                     nir_image = np.array(Image.open(self.nir_dir_path / nir_images[index]))
                     mask = np.array(Image.open(self.mask_dir_path / masks[index]))
-                    path = self.dir_path / 'records' / f'{rgb_id}_{rgb_coordinates[0]}_{rgb_coordinates[1]}.tfrecord'
+                    record_name = f'{rgb_id}_{rgb_coordinates[0]}_{rgb_coordinates[1]}.tfrecord'
+                    path = self.dir_path / self.record_name / record_name
                     RecordGenerator.export_record(rgb_image=rgb_image,
                                                   nir_image=nir_image,
                                                   mask=mask,
