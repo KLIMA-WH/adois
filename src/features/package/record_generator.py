@@ -128,22 +128,22 @@ class RecordGenerator:
             (rgb, nir, mask) do not match) or
             if the number of images is not valid (the number of images in each directory (rbg, nir, mask) do not match)
         """
-        rgb_dir_file_list = natsorted([x.name for x in self.rgb_dir_path.iterdir() if x.suffix == '.tiff'])
-        nir_dir_file_list = natsorted([x.name for x in self.nir_dir_path.iterdir() if x.suffix == '.tiff'])
-        mask_dir_file_list = natsorted([x.name for x in self.mask_dir_path.iterdir() if x.suffix == '.tiff'])
-        iterations = len(rgb_dir_file_list)
-        logger_padding_length = len(str(len(rgb_dir_file_list)))
+        rgb_images = natsorted([x.name for x in self.rgb_dir_path.iterdir() if x.suffix == '.tiff'])
+        nir_images = natsorted([x.name for x in self.nir_dir_path.iterdir() if x.suffix == '.tiff'])
+        masks = natsorted([x.name for x in self.mask_dir_path.iterdir() if x.suffix == '.tiff'])
+        iterations = len(rgb_images)
+        logger_padding_length = len(str(len(rgb_images)))
 
-        if len(rgb_dir_file_list) == len(nir_dir_file_list) == len(mask_dir_file_list):
-            for index, file in enumerate(rgb_dir_file_list):
-                _, rgb_id, rgb_coordinates = utils.get_image_metadata(rgb_dir_file_list[index])
-                _, nir_id, nir_coordinates = utils.get_image_metadata(nir_dir_file_list[index])
-                _, mask_id, mask_coordinates = utils.get_image_metadata(mask_dir_file_list[index])
+        if len(rgb_images) == len(nir_images) == len(masks):
+            for index, file in enumerate(rgb_images):
+                _, rgb_id, rgb_coordinates = utils.get_image_metadata(rgb_images[index])
+                _, nir_id, nir_coordinates = utils.get_image_metadata(nir_images[index])
+                _, mask_id, mask_coordinates = utils.get_image_metadata(masks[index])
                 if (rgb_id == nir_id == mask_id == index and
                         rgb_coordinates == nir_coordinates == mask_coordinates):
-                    rgb_image = np.array(Image.open(self.rgb_dir_path / rgb_dir_file_list[index]))
-                    nir_image = np.array(Image.open(self.nir_dir_path / nir_dir_file_list[index]))
-                    mask = np.array(Image.open(self.mask_dir_path / mask_dir_file_list[index]))
+                    rgb_image = np.array(Image.open(self.rgb_dir_path / rgb_images[index]))
+                    nir_image = np.array(Image.open(self.nir_dir_path / nir_images[index]))
+                    mask = np.array(Image.open(self.mask_dir_path / masks[index]))
                     path = self.dir_path / 'records' / f'{rgb_id}_{rgb_coordinates[0]}_{rgb_coordinates[1]}.tfrecord'
                     RecordGenerator.export_record(rgb_image=rgb_image,
                                                   nir_image=nir_image,
