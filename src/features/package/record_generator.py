@@ -36,7 +36,8 @@ class RecordGenerator:
                  record_name,
                  rgb_dir_path,
                  nir_dir_path,
-                 mask_dir_path):
+                 mask_dir_path,
+                 additional_info=None):
         """Constructor method
 
         :param str or Path dir_path: path to the directory
@@ -44,6 +45,7 @@ class RecordGenerator:
         :param str or Path rgb_dir_path: path to the directory of the rgb images
         :param str or Path nir_dir_path: path to the directory of the nir images
         :param str or Path mask_dir_path: path to the directory of the masks
+        :param str or None additional_info: additional info for metadata
         :returns: None
         :rtype: None
         """
@@ -52,6 +54,7 @@ class RecordGenerator:
         self.rgb_dir_path = Path(rgb_dir_path)
         self.nir_dir_path = Path(nir_dir_path)
         self.mask_dir_path = Path(mask_dir_path)
+        self.additional_info = additional_info
         (self.dir_path / self.record_name).mkdir(exist_ok=True)
 
     @staticmethod
@@ -138,6 +141,8 @@ class RecordGenerator:
             (rgb, nir, mask) do not match) or
             if the number of images is not valid (the number of images in each directory (rbg, nir, mask) do not match)
         """
+        start_time = DateTime.now()
+
         rgb_images = natsorted([x.name for x in self.rgb_dir_path.iterdir() if x.suffix == '.tiff'])
         nir_images = natsorted([x.name for x in self.nir_dir_path.iterdir() if x.suffix == '.tiff'])
         masks = natsorted([x.name for x in self.mask_dir_path.iterdir() if x.suffix == '.tiff'])
@@ -168,3 +173,17 @@ class RecordGenerator:
         else:
             raise ValueError('Invalid number of images! The number of images in each directory (rgb, nir, mask) '
                              'have to match.')
+
+        end_time = DateTime.now()
+        delta = utils.chop_microseconds(end_time - start_time)
+
+        metadata = {'timestamp': str(DateTime.now().isoformat(sep=' ', timespec='seconds')),
+                    'execution time': str(delta),
+                    'rgb images dir': self.rgb_dir_path.stem,
+                    'nir images dir': self.nir_dir_path.stem,
+                    'masks dir': self.mask_dir_path.stem,
+                    'number of iterations/ records': iterations}
+        if self.additional_info is not None:
+            metadata['additional info'] = self.additional_info
+        utils.export_metadata(self.dir_path / f'{self.record_name}_metadata.json',
+                              metadata=metadata)
