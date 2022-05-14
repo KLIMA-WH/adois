@@ -159,7 +159,7 @@ class RecordGenerator:
                     rgb_image = np.array(Image.open(self.rgb_dir_path / rgb_images[index]))
                     nir_image = np.array(Image.open(self.nir_dir_path / nir_images[index]))
                     mask = np.array(Image.open(self.masks_dir_path / masks[index]))
-                    record_name = f'{rgb_id}_{rgb_coordinates[0]}_{rgb_coordinates[1]}.tfrecord'
+                    record_name = f'{self.record_name}_{rgb_id}_{rgb_coordinates[0]}_{rgb_coordinates[1]}.tfrecord'
                     path = self.dir_path / self.record_name / record_name
                     RecordGenerator.export_record(rgb_image=rgb_image,
                                                   nir_image=nir_image,
