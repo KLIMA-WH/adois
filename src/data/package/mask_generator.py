@@ -226,33 +226,38 @@ class MaskGenerator:
                               metadata=metadata)
 
     @staticmethod
-    def preprocess_mask_shp(path,
+    def preprocess_mask_shp(dir_path,
+                            shp_name,
+                            mask_shp_path,
                             column,
                             replace,
                             delete=None):
-        """Preprocesses the shape file. The preprocessed shape file is saved with the suffix 'preprocessed' in the
-        directory of the shape file.
+        """Preprocesses a shape file.
 
-        :param str or Path path: path to the shape file of the mask that needs to be rasterized
+        :param str or Path dir_path: path to the directory
+        :param str shp_name: name of the shape file
+        :param str or Path mask_shp_path: path to the shape file of the mask that needs to be rasterized
         :param str column: name of the column of the class values
         :param dict[int or str, int] replace: dictionary of each class value (key) and their mask value (value)
         :param list[int] or None delete: list of class values to delete
         :returns: None
         :rtype: None
-        :raises ValueError: if value in replacement_dict is not valid (not a value between 0 and 255)
+        :raises ValueError: if value in replace is not valid (not a value between 0 and 255)
         """
-        path = Path(path)
+        dir_path = Path(dir_path)
+        mask_shp_path = Path(mask_shp_path)
 
         for value in list(replace.values()):
             if not 0 <= value <= 255:
-                raise ValueError('Invalid value in replacement_dict! '
-                                 'Values in replacement_dict have to be values between 0 and 255.')
+                raise ValueError('Invalid value in replace! '
+                                 'Values in replace have to be values between 0 and 255.')
 
-        shapes = gpd.read_file(path)
+        shapes = gpd.read_file(mask_shp_path)
         shapes['mask_value'] = shapes[column]
         shapes.replace({'mask_value': replace}, inplace=True)
 
         if delete is not None:
             shapes = shapes[~shapes.mask_value.isin(delete)]
 
-        shapes.to_file(path.parents[0] / f'{path.stem}_preprocessed.shp')
+        (dir_path / shp_name).mkdir(exist_ok=True)
+        shapes.to_file(dir_path / shp_name / f'{shp_name}.shp')
