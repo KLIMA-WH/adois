@@ -47,7 +47,7 @@ def export_metadata(path, metadata):
     """Exports a metadata file (.json).
 
     :param str or Path path: path to the metadata file
-    :param dict metadata: metadata
+    :param dict or list metadata: metadata
     :returns: None
     :rtype: None
     :raises ValueError: if path is not valid (file extension is not .json)
