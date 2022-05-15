@@ -222,8 +222,8 @@ class MaskGenerator:
                     'number of iterations/ images': iterations}
         if self.additional_info is not None:
             metadata['additional info'] = self.additional_info
-        utils.export_metadata(self.dir_path / f'{self.mask_name}_metadata.json',
-                              metadata=metadata)
+        utils.export_json(self.dir_path / f'{self.mask_name}_metadata.json',
+                          metadata=metadata)
 
     @staticmethod
     def preprocess_mask_shp(dir_path,

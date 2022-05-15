@@ -271,10 +271,10 @@ class OrthophotoDownloader:
                     'number of images': image_id}
         if self.additional_info is not None:
             metadata['additional info'] = self.additional_info
-        utils.export_metadata(self.dir_path / f'{self.image_name}_metadata.json',
-                              metadata=metadata)
-        utils.export_metadata(self.dir_path / f'{self.image_name}_coordinates.json',
-                              metadata=metadata_coordinates)
+        utils.export_json(self.dir_path / f'{self.image_name}_metadata.json',
+                          metadata=metadata)
+        utils.export_json(self.dir_path / f'{self.image_name}_coordinates.json',
+                          metadata=metadata_coordinates)
 
     @staticmethod
     def print_info(wms_url):

@@ -188,5 +188,5 @@ class RecordGenerator:
                     'number of iterations/ records': iterations}
         if self.additional_info is not None:
             metadata['additional info'] = self.additional_info
-        utils.export_metadata(self.dir_path / f'{self.record_name}_metadata.json',
-                              metadata=metadata)
+        utils.export_json(self.dir_path / f'{self.record_name}_metadata.json',
+                          metadata=metadata)

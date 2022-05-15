@@ -43,7 +43,7 @@ def export_wld(path,
         raise ValueError('Invalid path! The file extension of the path has to be .wld.')
 
 
-def export_metadata(path, metadata):
+def export_json(path, metadata):
     """Exports a metadata file (.json).
 
     :param str or Path path: path to the metadata file
