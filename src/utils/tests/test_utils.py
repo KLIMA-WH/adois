@@ -61,8 +61,8 @@ class TestUtils(unittest.TestCase):
         test_metadata = {'a': 1, 'b': 2, 'c': 3}
         content = {'a': 1, 'b': 2, 'c': 3}
         with tempfile.TemporaryDirectory(dir='') as temp_dir:
-            utils.export_metadata(path=str(Path(temp_dir) / test_path),
-                                  metadata=test_metadata)
+            utils.export_json(path=str(Path(temp_dir) / test_path),
+                              metadata=test_metadata)
             with open(Path(temp_dir) / test_path, 'r') as file:
                 test_content = json.load(file)
             self.assertEqual(test_content, content)
@@ -70,15 +70,15 @@ class TestUtils(unittest.TestCase):
         test_path = 'test.txt'
         with self.assertRaises(ValueError):
             with tempfile.TemporaryDirectory(dir='') as temp_dir:
-                utils.export_metadata(path=str(Path(temp_dir) / test_path),
-                                      metadata=test_metadata)
+                utils.export_json(path=str(Path(temp_dir) / test_path),
+                                  metadata=test_metadata)
 
         test_path = Path('test.json')
         test_metadata = {'a': 1, 'b': 2, 'c': 3}
         content = {'a': 1, 'b': 2, 'c': 3}
         with tempfile.TemporaryDirectory(dir='') as temp_dir:
-            utils.export_metadata(path=str(Path(temp_dir) / test_path),
-                                  metadata=test_metadata)
+            utils.export_json(path=str(Path(temp_dir) / test_path),
+                              metadata=test_metadata)
             with open(Path(temp_dir) / test_path, 'r') as file:
                 test_content = json.load(file)
             self.assertEqual(test_content, content)
@@ -86,8 +86,8 @@ class TestUtils(unittest.TestCase):
         test_path = Path('test.txt')
         with self.assertRaises(ValueError):
             with tempfile.TemporaryDirectory(dir='') as temp_dir:
-                utils.export_metadata(path=str(Path(temp_dir) / test_path),
-                                      metadata=test_metadata)
+                utils.export_json(path=str(Path(temp_dir) / test_path),
+                                  metadata=test_metadata)
 
     def test_chop_microseconds(self):
         test_datetime_1 = DateTime(year=2020,
