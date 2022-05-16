@@ -37,6 +37,7 @@ class RecordGenerator:
                  rgb_dir_path,
                  nir_dir_path,
                  masks_dir_path,
+                 skip=None,
                  additional_info=None):
         """Constructor method
 
@@ -45,6 +46,7 @@ class RecordGenerator:
         :param str or Path rgb_dir_path: path to the directory of the rgb images
         :param str or Path nir_dir_path: path to the directory of the nir images
         :param str or Path masks_dir_path: path to the directory of the masks
+        :param list[int] or None skip: list of image ids to be skipped
         :param str or None additional_info: additional info for metadata
         :returns: None
         :rtype: None
@@ -54,6 +56,7 @@ class RecordGenerator:
         self.rgb_dir_path = Path(rgb_dir_path)
         self.nir_dir_path = Path(nir_dir_path)
         self.masks_dir_path = Path(masks_dir_path)
+        self.skip = skip
         self.additional_info = additional_info
         (self.dir_path / self.record_name).mkdir(exist_ok=True)
 
@@ -149,6 +152,11 @@ class RecordGenerator:
         iterations = len(rgb_images)
         logger_padding_length = len(str(len(rgb_images)))
 
+        if self.skip is not None:
+            valid_image_ids = set(range(iterations)) - set(self.skip)
+        else:
+            valid_image_ids = None
+
         if len(rgb_images) == len(nir_images) == len(masks):
             for index, image in enumerate(rgb_images):
                 _, rgb_id, rgb_coordinates = utils.get_image_metadata(rgb_images[index])
@@ -156,20 +164,24 @@ class RecordGenerator:
                 _, mask_id, mask_coordinates = utils.get_image_metadata(masks[index])
                 if (rgb_id == nir_id == mask_id == index and
                         rgb_coordinates == nir_coordinates == mask_coordinates):
-                    with Image.open(self.rgb_dir_path / rgb_images[index]) as file:
-                        rgb_image = np.array(file)
-                    with Image.open(self.nir_dir_path / nir_images[index]) as file:
-                        nir_image = np.array(file)
-                    with Image.open(self.masks_dir_path / masks[index]) as file:
-                        mask = np.array(file)
-                    record_name = f'{self.record_name}_{rgb_id}_{rgb_coordinates[0]}_{rgb_coordinates[1]}.tfrecord'
-                    path = self.dir_path / self.record_name / record_name
-                    RecordGenerator.export_record(rgb_image=rgb_image,
-                                                  nir_image=nir_image,
-                                                  mask=mask,
-                                                  path=path)
-                    logger.info(f'iteration {index + 1:>{logger_padding_length}} / {iterations} '
-                                f'-> record with id = {index} exported')
+                    if self.skip is None or self.skip is not None and index in valid_image_ids:
+                        with Image.open(self.rgb_dir_path / rgb_images[index]) as file:
+                            rgb_image = np.array(file)
+                        with Image.open(self.nir_dir_path / nir_images[index]) as file:
+                            nir_image = np.array(file)
+                        with Image.open(self.masks_dir_path / masks[index]) as file:
+                            mask = np.array(file)
+                        record_name = f'{self.record_name}_{rgb_id}_{rgb_coordinates[0]}_{rgb_coordinates[1]}.tfrecord'
+                        path = self.dir_path / self.record_name / record_name
+                        RecordGenerator.export_record(rgb_image=rgb_image,
+                                                      nir_image=nir_image,
+                                                      mask=mask,
+                                                      path=path)
+                        logger.info(f'iteration {index + 1:>{logger_padding_length}} / {iterations} '
+                                    f'-> record with id = {index} exported')
+                    else:
+                        logger.info(f'iteration {index + 1:>{logger_padding_length}} / {iterations} '
+                                    f'-> record with id = {index} skipped')
                 else:
                     raise ValueError('Invalid image metadata! The ids and the coordinates of the images '
                                      '(rgb, nir, mask) have to match.')
