@@ -26,7 +26,7 @@ class TestUtils(unittest.TestCase):
             utils.export_wld(path=str(Path(temp_dir) / test_path),
                              resolution=test_resolution,
                              coordinates=test_coordinates)
-            with open(Path(temp_dir) / test_path, 'r') as file:
+            with open(Path(temp_dir) / test_path) as file:
                 test_content = file.read()
             self.assertEqual(test_content, content)
 
@@ -45,7 +45,7 @@ class TestUtils(unittest.TestCase):
             utils.export_wld(path=str(Path(temp_dir) / test_path),
                              resolution=test_resolution,
                              coordinates=test_coordinates)
-            with open(Path(temp_dir) / test_path, 'r') as file:
+            with open(Path(temp_dir) / test_path) as file:
                 test_content = file.read()
             self.assertEqual(test_content, content)
 
@@ -63,7 +63,7 @@ class TestUtils(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir='') as temp_dir:
             utils.export_json(path=str(Path(temp_dir) / test_path),
                               metadata=test_metadata)
-            with open(Path(temp_dir) / test_path, 'r') as file:
+            with open(Path(temp_dir) / test_path) as file:
                 test_content = json.load(file)
             self.assertEqual(test_content, content)
 
@@ -79,7 +79,7 @@ class TestUtils(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir='') as temp_dir:
             utils.export_json(path=str(Path(temp_dir) / test_path),
                               metadata=test_metadata)
-            with open(Path(temp_dir) / test_path, 'r') as file:
+            with open(Path(temp_dir) / test_path) as file:
                 test_content = json.load(file)
             self.assertEqual(test_content, content)
 
