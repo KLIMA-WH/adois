@@ -32,7 +32,7 @@ def export_wld(path,
     """
     path = Path(path)
     if path.suffix == '.wld':
-        with open(path, 'w') as file:
+        with open(path, mode='w') as file:
             file.write(f'{resolution}\n'
                        '0.0\n'
                        '0.0\n'
@@ -54,7 +54,7 @@ def export_json(path, metadata):
     """
     path = Path(path)
     if path.suffix == '.json':
-        with open(path, 'w') as file:
+        with open(path, mode='w') as file:
             json.dump(metadata, file, indent=4)
     else:
         raise ValueError('Invalid path! The file extension of the path has to be .json.')
