@@ -72,7 +72,7 @@ class TileAggregator:
 
     def __call__(self):
         """Exports all tiles of an area as one shape file to the aggregated directory.
-        In each tiles shape is an attribute imp_dens with the value of its imperviousness density.
+        In each tile shape is an attribute imp_dens with the value of its imperviousness density.
 
         :returns: None
         :rtype: None
