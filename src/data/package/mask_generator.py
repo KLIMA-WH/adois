@@ -176,7 +176,6 @@ class MaskGenerator:
                           nodata=0) as file:
                 file.write(image)
         else:
-            # noinspection PyTypeChecker
             Image.fromarray(np.moveaxis(image,
                                         source=0,
                                         destination=-1)).save(path)

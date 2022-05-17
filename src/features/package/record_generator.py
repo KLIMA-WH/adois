@@ -166,10 +166,13 @@ class RecordGenerator:
                         rgb_coordinates == nir_coordinates == mask_coordinates):
                     if self.skip is None or self.skip is not None and index in valid_image_ids:
                         with Image.open(self.rgb_dir_path / rgb_images[index]) as file:
+                            # noinspection PyTypeChecker
                             rgb_image = np.array(file)
                         with Image.open(self.nir_dir_path / nir_images[index]) as file:
+                            # noinspection PyTypeChecker
                             nir_image = np.array(file)
                         with Image.open(self.masks_dir_path / masks[index]) as file:
+                            # noinspection PyTypeChecker
                             mask = np.array(file)
                         record_name = f'{self.record_name}_{rgb_id}_{rgb_coordinates[0]}_{rgb_coordinates[1]}.tfrecord'
                         path = self.dir_path / self.record_name / record_name

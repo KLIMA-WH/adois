@@ -82,6 +82,7 @@ class TileAggregator:
 
         dir_file_list = natsorted([x for x in self.dir_path.iterdir() if x.suffix == '.tiff'])
         for index, file in enumerate(dir_file_list):
+            # noinspection PyTypeChecker
             mask = np.array(Image.open(file))
             _, _, coordinates = utils.get_image_metadata(file)
 

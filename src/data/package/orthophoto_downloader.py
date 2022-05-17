@@ -136,6 +136,7 @@ class OrthophotoDownloader:
                                    size=(self.image_size, self.image_size),
                                    bgcolor='#000000')
         with Image.open(BytesIO(response.read())) as file:
+            # noinspection PyTypeChecker
             image = np.moveaxis(np.array(file),
                                 source=-1,
                                 destination=0)
@@ -194,7 +195,6 @@ class OrthophotoDownloader:
                           nodata=0) as file:
                 file.write(image)
         else:
-            # noinspection PyTypeChecker
             Image.fromarray(np.moveaxis(image,
                                         source=0,
                                         destination=-1)).save(path)
