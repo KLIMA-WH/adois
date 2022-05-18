@@ -213,7 +213,7 @@ class MaskGenerator:
         end_time = DateTime.now()
         delta = utils.chop_microseconds(end_time - start_time)
 
-        metadata = {'timestamp': str(end_time.isoformat(sep=' ', timespec='seconds')),
+        metadata = {'timestamp': str(start_time.isoformat(sep=' ', timespec='seconds')),
                     'execution time': str(delta),
                     'epsg code': self.epsg_code,
                     'resolution': self.resolution,
