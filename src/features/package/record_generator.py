@@ -208,8 +208,12 @@ class RecordGenerator:
                     'execution time': str(delta),
                     'rgb images dir': self.rgb_dir_path.stem,
                     'nir images dir': self.nir_dir_path.stem,
-                    'masks dir': self.masks_dir_path.stem,
-                    'number of iterations/ records': iterations}
+                    'masks dir': self.masks_dir_path.stem}
+        if self.skip is not None:
+            metadata['number of iterations'] = iterations
+            metadata['number of records'] = iterations - len(self.skip)
+        else:
+            metadata['number of iterations/ records'] = iterations
         if self.additional_info is not None:
             metadata['additional info'] = self.additional_info
         utils.export_json(self.dir_path / f'{self.record_name}_metadata.json',
