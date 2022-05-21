@@ -1,3 +1,4 @@
+import json
 import logging
 from datetime import datetime as DateTime  # PEP 8 compliant
 from pathlib import Path
@@ -37,7 +38,7 @@ class RecordGenerator:
                  rgb_dir_path,
                  nir_dir_path,
                  masks_dir_path,
-                 skip=None,
+                 skip_file_path=None,
                  additional_info=None):
         """Constructor method
 
@@ -46,7 +47,7 @@ class RecordGenerator:
         :param str or Path rgb_dir_path: path to the directory of the rgb images
         :param str or Path nir_dir_path: path to the directory of the nir images
         :param str or Path masks_dir_path: path to the directory of the masks
-        :param list[int] or None skip: list of image ids to be skipped
+        :param str or Path or None skip_file_path: path to the skip file (.json) containing the ids to skip
         :param str or None additional_info: additional info for metadata
         :returns: None
         :rtype: None
@@ -56,7 +57,15 @@ class RecordGenerator:
         self.rgb_dir_path = Path(rgb_dir_path)
         self.nir_dir_path = Path(nir_dir_path)
         self.masks_dir_path = Path(masks_dir_path)
-        self.skip = skip
+
+        if skip_file_path is not None:
+            skip_file_path = Path(skip_file_path)
+            if skip_file_path.is_file():
+                with open(skip_file_path) as file:
+                    self.skip = json.load(file)
+        else:
+            self.skip = None
+
         self.additional_info = additional_info
         (self.dir_path / self.record_name).mkdir(exist_ok=True)
 
