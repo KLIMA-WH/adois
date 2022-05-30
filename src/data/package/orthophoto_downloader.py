@@ -205,15 +205,11 @@ class OrthophotoDownloader:
                              resolution=self.resolution,
                              coordinates=coordinates)
 
-    def __call__(self,
-                 index=0,
-                 image_id=0):
+    def __call__(self):
         """Exports all images of an area given its bounding box to the images directory.
         Each image name consists of the following attributes separated by an underscore:
         'prefix_id_x_y.tiff'
 
-        :param int index: initial index of the iteration through the images
-        :param int image_id: initial value of the image ids
         :returns: None
         :rtype: None
         """
@@ -228,15 +224,15 @@ class OrthophotoDownloader:
         iterations = columns * rows
         logger_padding_length = len(str(iterations))
 
-        initial_row = index // columns
-        initial_column = index % columns
+        iteration = 1
+        image_id = 0
 
         non_zero_threshold = self.image_size ** 2 * OrthophotoDownloader.BANDS * self.non_zero_ratio
 
         metadata_coordinates = {}
 
-        for row in range(initial_row, rows):
-            for column in range(initial_column, columns) if row == initial_row else range(columns):
+        for row in range(rows):
+            for column in range(columns):
                 coordinates = (round(self.bounding_box[0] + column * self.image_size_meters, 2),
                                round(self.bounding_box[1] + (row + 1) * self.image_size_meters, 2))
                 image = self.get_orthophoto(coordinates)
@@ -247,13 +243,13 @@ class OrthophotoDownloader:
                                            path=path,
                                            coordinates=coordinates)
                     metadata_coordinates[image_id] = coordinates
-                    logger.info(f'iteration {index + 1:>{logger_padding_length}} / {iterations} '
+                    logger.info(f'iteration {iteration:>{logger_padding_length}} / {iterations} '
                                 f'-> image with id = {image_id} exported')
                     image_id += 1
                 else:
-                    logger.info(f'iteration {index + 1:>{logger_padding_length}} / {iterations} '
+                    logger.info(f'iteration {iteration:>{logger_padding_length}} / {iterations} '
                                 f'-> image skipped')
-                index += 1
+                iteration += 1
 
         end_time = DateTime.now()
         delta = utils.chop_microseconds(end_time - start_time)
