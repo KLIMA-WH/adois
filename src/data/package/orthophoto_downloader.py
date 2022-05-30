@@ -1,3 +1,4 @@
+import json
 import logging
 import warnings
 from datetime import datetime as DateTime  # PEP 8 compliant
@@ -47,7 +48,8 @@ class OrthophotoDownloader:
                  epsg_code,
                  resolution,
                  image_size,
-                 bounding_box,
+                 coordinates_path=None,
+                 bounding_box=None,
                  shp_path=None,
                  create_wld=False,
                  create_geotiff=False,
@@ -62,7 +64,9 @@ class OrthophotoDownloader:
         :param int epsg_code: epsg code of the coordinate reference system
         :param float resolution: resolution in meters per pixel
         :param int image_size: image size in pixels
-        :param (float, float, float, float) bounding_box: bounding box (x_1, y_1, x_2, y_2)
+        :param str or Path or None coordinates_path: path to the coordinates file (.json) containing the ids and
+            coordinates to download
+        :param (float, float, float, float) or None bounding_box: bounding box (x_1, y_1, x_2, y_2)
             of the area from the bottom left corner to the top right corner
         :param str or Path or None shp_path: path to the shape file for masking specific areas
         :param bool create_wld: if True, a world file is created
@@ -92,14 +96,25 @@ class OrthophotoDownloader:
                              f'{[*OrthophotoDownloader.VALID_IMAGE_SIZE]}.')
         self.image_size_meters = self.resolution * self.image_size
 
-        if bounding_box[0] < bounding_box[2] or bounding_box[1] < bounding_box[3]:
-            self.bounding_box = (round(bounding_box[0], 2),
-                                 round(bounding_box[1], 2),
-                                 round(bounding_box[2], 2),
-                                 round(bounding_box[3], 2))
+        if coordinates_path is not None:
+            coordinates_path = Path(coordinates_path)
+            if coordinates_path.is_file():
+                with open(coordinates_path) as file:
+                    self.coordinates = json.load(file)
         else:
-            raise ValueError('Invalid bounding_box! x_1 has to be smaller than x_2 and '
-                             'y_1 has to be smaller than y_2.')
+            self.coordinates = None
+
+        if bounding_box is not None:
+            if bounding_box[0] < bounding_box[2] or bounding_box[1] < bounding_box[3]:
+                self.bounding_box = (round(bounding_box[0], 2),
+                                     round(bounding_box[1], 2),
+                                     round(bounding_box[2], 2),
+                                     round(bounding_box[3], 2))
+            else:
+                raise ValueError('Invalid bounding_box! x_1 has to be smaller than x_2 and '
+                                 'y_1 has to be smaller than y_2.')
+        else:
+            self.bounding_box = None
 
         if shp_path is not None:
             shp_path = Path(shp_path)
@@ -205,7 +220,52 @@ class OrthophotoDownloader:
                              resolution=self.resolution,
                              coordinates=coordinates)
 
-    def __call__(self):
+    def export_orthophotos_coordinates(self):
+        """Exports all images of an area given a dictionary of ids and coordinates to the images directory.
+        Each image name consists of the following attributes separated by an underscore:
+        'prefix_id_x_y.tiff'
+
+        :returns: None
+        :rtype: None
+        """
+        start_time = DateTime.now()
+
+        iterations = len(self.coordinates)
+        logger_padding_length = len(str(iterations))
+
+        iteration = 1
+
+        for image_id, coordinates in self.coordinates.items():
+            coordinates = tuple(coordinates)
+            image = self.get_orthophoto(coordinates)
+            image_name = f'{self.image_name}_{image_id}_{coordinates[0]}_{coordinates[1]}.tiff'
+            path = self.dir_path / self.image_name / image_name
+            self.export_orthophoto(image,
+                                   path=path,
+                                   coordinates=coordinates)
+            logger.info(f'iteration {iteration:>{logger_padding_length}} / {iterations} '
+                        f'-> image with id = {image_id} exported')
+            iteration += 1
+
+        end_time = DateTime.now()
+        delta = utils.chop_microseconds(end_time - start_time)
+
+        metadata = {'timestamp': str(start_time.isoformat(sep=' ', timespec='seconds')),
+                    'execution time': str(delta),
+                    'wms url': self.wms_url,
+                    'layer': self.layer,
+                    'epsg code': self.epsg_code,
+                    'resolution': self.resolution,
+                    'image size': self.image_size,
+                    'number of iterations/ images': iterations}
+        if self.additional_info is not None:
+            metadata['additional info'] = self.additional_info
+        utils.export_json(self.dir_path / f'{self.image_name}_metadata.json',
+                          metadata=metadata)
+        utils.export_json(self.dir_path / f'{self.image_name}_coordinates.json',
+                          metadata=self.coordinates)
+
+    def export_orthophotos_bounding_box(self):
         """Exports all images of an area given its bounding box to the images directory.
         Each image name consists of the following attributes separated by an underscore:
         'prefix_id_x_y.tiff'
@@ -262,8 +322,6 @@ class OrthophotoDownloader:
                     'resolution': self.resolution,
                     'image size': self.image_size,
                     'bounding box': self.bounding_box,
-                    'number of columns': columns,
-                    'number of rows': rows,
                     'number of iterations': iterations,
                     'number of images': image_id}
         if self.additional_info is not None:
@@ -272,6 +330,23 @@ class OrthophotoDownloader:
                           metadata=metadata)
         utils.export_json(self.dir_path / f'{self.image_name}_coordinates.json',
                           metadata=metadata_coordinates)
+
+    def __call__(self):
+        """Exports all images of an area either given a dictionary of ids and coordinates or its bounding box
+        to the images directory.
+        Each image name consists of the following attributes separated by an underscore:
+        'prefix_id_x_y.tiff'
+
+        :returns: None
+        :rtype: None
+        :raises ValueError: if the mode is not valid (neither coordinates nor a bounding box are defined)
+        """
+        if self.coordinates is not None:
+            self.export_orthophotos_coordinates()
+        elif self.bounding_box is not None:
+            self.export_orthophotos_bounding_box()
+        else:
+            raise ValueError('Invalid mode! Either coordinates or a bounding box have to be defined.')
 
     @staticmethod
     def print_info(wms_url):
