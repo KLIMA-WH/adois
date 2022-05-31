@@ -10,6 +10,7 @@ import numpy as np
 import rasterio as rio
 import rasterio.mask
 from PIL import Image
+from natsort import natsorted
 from owslib.wms import WebMapService
 
 from src.utils.package import utils
@@ -388,3 +389,24 @@ class OrthophotoDownloader:
         print(f'CRS:          {wms[layer].crsOptions}\n'
               f'Bounding Box: {wms[layer].boundingBox}\n'
               f'Styles:       {wms[layer].styles}')
+
+    @staticmethod
+    def create_coordinates(dir_path):
+        """Creates a coordinates file (.json) in the parent directory containing the ids and coordinates
+        of all orthophotos in the images directory.
+
+        :param str or Path dir_path: path to the directory
+        :returns: None
+        :rtype: None
+        """
+        dir_path = Path(dir_path)
+        orthophotos = natsorted([x.name for x in dir_path.iterdir() if x.suffix == '.tiff'])
+
+        metadata_coordinates = {}
+
+        for file in orthophotos:
+            _, image_id, coordinates = utils.get_image_metadata(file)
+            metadata_coordinates[image_id] = coordinates
+
+        utils.export_json(dir_path.parents[0] / f'{dir_path.name}_coordinates.json',
+                          metadata=metadata_coordinates)
