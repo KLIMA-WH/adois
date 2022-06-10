@@ -31,13 +31,25 @@ class RecordGenerator:
 
     Author: Marius Maryniak (marius.maryniak@w-hs.de)
     """
+    COLOR_CODES_NDSM = {(0, 0, 0): 0,  # 0.0m - 1.0m
+                        (255, 255, 255): 28,  # 1.0m - 1.5m
+                        (31, 120, 180): 57,  # 1.5m - 3.0m
+                        (54, 214, 209): 85,  # 3.0m - 5.0m
+                        (64, 207, 39): 113,  # 5.0m - 10.0m
+                        (255, 255, 71): 142,  # 10.0m - 15.0m
+                        (255, 206, 71): 170,  # 15.0m - 20.0m
+                        (255, 127, 0): 198,  # 20.0m - 25.0m
+                        (215, 25, 28): 227,  # 25.0m - 50.0m
+                        (114, 0, 11): 255}  # > 50.0m
 
     def __init__(self,
                  dir_path,
                  record_name,
                  rgb_dir_path,
-                 nir_dir_path,
                  masks_dir_path,
+                 nir_dir_path=None,
+                 ndsm_dir_path=None,
+                 color_codes=None,
                  skip_file_path=None,
                  additional_info=None):
         """Constructor method
@@ -45,8 +57,12 @@ class RecordGenerator:
         :param str or Path dir_path: path to the directory
         :param str record_name: prefix of the record name
         :param str or Path rgb_dir_path: path to the directory of the rgb images
-        :param str or Path nir_dir_path: path to the directory of the nir images
         :param str or Path masks_dir_path: path to the directory of the masks
+        :param str or Path or None nir_dir_path: path to the directory of the nir images
+        :param str or Path or None ndsm_dir_path: path to the directory of the ndsm images
+        :param dict[tuple[int, int, int], int] or None color_codes: color codes for the color mapping to reduce the
+            dimensions of the ndsm images from 3 dimensions to 2 dimensions (the key of the dictionary is the
+            rgb value and the value of the dictionary is the corresponding mapped value)
         :param str or Path or None skip_file_path: path to the skip file (.json) containing the ids to skip
         :param str or None additional_info: additional info for metadata
         :returns: None
@@ -55,8 +71,20 @@ class RecordGenerator:
         self.dir_path = Path(dir_path)
         self.record_name = record_name
         self.rgb_dir_path = Path(rgb_dir_path)
-        self.nir_dir_path = Path(nir_dir_path)
         self.masks_dir_path = Path(masks_dir_path)
+
+        if nir_dir_path is not None:
+            self.nir_dir_path = Path(nir_dir_path)
+        else:
+            self.nir_dir_path = None
+
+        if ndsm_dir_path is not None:
+            self.ndsm_dir_path = Path(ndsm_dir_path)
+            if color_codes is None:
+                color_codes = RecordGenerator.COLOR_CODES_NDSM
+            self.color_map = self.get_color_map(color_codes)
+        else:
+            self.ndsm_dir_path = None
 
         if skip_file_path is not None:
             skip_file_path = Path(skip_file_path)
@@ -70,26 +98,65 @@ class RecordGenerator:
         (self.dir_path / self.record_name).mkdir(exist_ok=True)
 
     @staticmethod
-    def concatenate_to_rgbi(rgb_image, nir_image):
-        """Returns a concatenated rgbi image of the rgb image and the nir image.
+    def get_color_map(color_codes):
+        """Returns a color map.
+        Based on: https://stackoverflow.com/a/33196320
+
+        :param dict[tuple[int, int, int], int] color_codes: color codes for the color mapping to reduce the
+            dimensions of an image from 3 dimensions to 2 dimensions (the key of the dictionary is the rgb value
+            and the value of the dictionary is the corresponding mapped value)
+        :returns: color map
+        :rtype: np.ndarray[int]
+        """
+        color_map = np.full(shape=(256 * 256 * 256),
+                            fill_value=0,  # mapped value of all other colors not in the color_codes dictionary,
+                            # such as interpolation artefacts
+                            dtype=np.int32)
+        for rgb, index in color_codes.items():
+            rgb = rgb[0] * 65536 + rgb[1] * 256 + rgb[2]
+            color_map[rgb] = index
+        return color_map
+
+    def reduce_dimensions(self, image):
+        """Returns an color mapped image with reduced dimensions (2 dimensions instead of 3 dimensions).
+        Based on: https://stackoverflow.com/a/33196320
+
+        :param np.ndarray[int] image: image
+        :returns: color mapped image
+        :rtype: np.ndarray[int]
+        """
+        image = np.dot(image, np.array([65536, 256, 1], dtype=np.int32))
+        return self.color_map[image]
+
+    def concatenate_images(self,
+                           rgb_image,
+                           nir_image=None,
+                           ndsm_image=None):
+        """Returns an concatenated image of the rgb image, the nir image and the ndsm image.
 
         :param np.ndarray[int] rgb_image: rgb image
-        :param np.ndarray[int] nir_image: nir image
-        :returns: rgbi image
+        :param np.ndarray[int] or None nir_image: nir image
+        :param np.ndarray[int] or None ndsm_image: ndsm image
+        :returns: concatenated image
         :rtype: np.ndarray[int]
-        :raises ValueError: if the dimensions of the nir image are not valid (not a value of 2 or 3)
         """
-        if nir_image.ndim == 2:
-            rgbi_image = np.concatenate((rgb_image, np.expand_dims(nir_image, axis=-1)),
-                                        axis=-1)
-            return rgbi_image
-        elif nir_image.ndim == 3:
-            rgbi_image = np.concatenate((rgb_image, np.expand_dims(nir_image[..., 0], axis=-1)),
-                                        axis=-1)
-            return rgbi_image
-        else:
-            raise ValueError('Invalid dimensions of the nir image! The dimensions of the nir_image have to be '
-                             'a value of 2 or 3.')
+        images = [rgb_image]
+
+        if nir_image is not None:
+            if nir_image.ndim == 2:
+                nir_image = np.expand_dims(nir_image, axis=-1)
+                images.append(nir_image)
+            elif nir_image.ndim == 3:
+                nir_image = np.expand_dims(nir_image[..., 0], axis=-1)
+                images.append(nir_image)
+
+        if ndsm_image is not None:
+            ndsm_image = self.reduce_dimensions(ndsm_image)
+            ndsm_image = np.expand_dims(ndsm_image, axis=-1)
+            images.append(ndsm_image)
+
+        concatenated_image = np.concatenate(tuple(images), axis=-1)
+        return concatenated_image
 
     @staticmethod
     def get_tensor_feature(tensor):
@@ -97,67 +164,84 @@ class RecordGenerator:
 
         :param tf.Tensor tensor: tensor
         :returns: feature
-        :rtype: tf.train.Feature
+        :rtype: tf.core.example.feature_pb2.Feature
         """
-        return tf.train.Feature(bytes_list=tf.train.BytesList(value=[tf.io.serialize_tensor(tensor).numpy()]))
+        feature = tf.train.Feature(bytes_list=tf.train.BytesList(value=[tf.io.serialize_tensor(tensor).numpy()]))
+        return feature
 
-    @staticmethod
-    def get_example(rgb_image,
-                    nir_image,
-                    mask):
-        """Returns an example with 'image' and 'mask' as features. 'image' is a concatenated rgbi image.
+    def get_example(self,
+                    rgb_image,
+                    mask,
+                    nir_image=None,
+                    ndsm_image=None):
+        """Returns an example with 'image' and 'mask' as features. 'image' is a concatenated image
+        of the rgb image, the nir image and the ndsm image.
 
         :param np.ndarray[int] rgb_image: rgb image
-        :param np.ndarray[int] nir_image: nir image
         :param np.ndarray[int] mask: mask
+        :param np.ndarray[int] or None nir_image: nir image
+        :param np.ndarray[int] or None ndsm_image: ndsm image
         :returns: example
-        :rtype: tf.train.Example
+        :rtype: tf.core.example.example_pb2.Example
         """
-        image = RecordGenerator.concatenate_to_rgbi(rgb_image=rgb_image,
-                                                    nir_image=nir_image)
+        image = self.concatenate_images(rgb_image=rgb_image,
+                                        nir_image=nir_image,
+                                        ndsm_image=ndsm_image)
         feature = {'image': RecordGenerator.get_tensor_feature(tf.cast(image, dtype=tf.uint8)),
                    'mask': RecordGenerator.get_tensor_feature(tf.cast(mask, dtype=tf.uint8))}
         example = tf.train.Example(features=tf.train.Features(feature=feature))
         return example
 
-    @staticmethod
-    def export_record(rgb_image,
-                      nir_image,
+    def export_record(self,
+                      rgb_image,
                       mask,
-                      path):
+                      path,
+                      nir_image=None,
+                      ndsm_image=None):
         """Exports a record from the get_example() method.
 
         :param np.ndarray[int] rgb_image: rgb image
-        :param np.ndarray[int] nir_image: nir image
         :param np.ndarray[int] mask: mask
         :param str or Path path: path to the record
+        :param np.ndarray[int] or None nir_image: nir image
+        :param np.ndarray[int] or None ndsm_image: ndsm image
         :returns: None
         :rtype: None
         """
         path = str(path)
 
         with tf.io.TFRecordWriter(path) as writer:
-            example = RecordGenerator.get_example(rgb_image=rgb_image,
-                                                  nir_image=nir_image,
-                                                  mask=mask)
+            example = self.get_example(rgb_image=rgb_image,
+                                       mask=mask,
+                                       nir_image=nir_image,
+                                       ndsm_image=ndsm_image)
             writer.write(example.SerializeToString())
 
     def __call__(self):
-        """Exports all images (rgb, nir, mask) of an area as a record to the records directory.
+        """Exports all images (rgb, nir, ndsm, mask) of an area as a record to the records directory.
         Each record name consists of the following attributes separated by an underscore:
         'id_x_y.tfrecord'
 
         :returns: None
         :rtype: None
         :raises ValueError: if the image metadata is not valid (either the ids or the coordinates of the images
-            (rgb, nir, mask) do not match) or
-            if the number of images is not valid (the number of images in each directory (rbg, nir, mask) do not match)
+            (rgb, nir, ndsm, mask) do not match) or
+            if the number of images is not valid (the number of images in each directory (rbg, nir, ndsm, mask)
+            does not match)
         """
         start_time = DateTime.now()
 
+        images = []
         rgb_images = natsorted([x.name for x in self.rgb_dir_path.iterdir() if x.suffix == '.tiff'])
-        nir_images = natsorted([x.name for x in self.nir_dir_path.iterdir() if x.suffix == '.tiff'])
+        images.append(len(rgb_images))
+        if self.nir_dir_path is not None:
+            nir_images = natsorted([x.name for x in self.nir_dir_path.iterdir() if x.suffix == '.tiff'])
+            images.append(len(nir_images))
+        if self.ndsm_dir_path is not None:
+            ndsm_images = natsorted([x.name for x in self.ndsm_dir_path.iterdir() if x.suffix == '.tiff'])
+            images.append(len(ndsm_images))
         masks = natsorted([x.name for x in self.masks_dir_path.iterdir() if x.suffix == '.tiff'])
+        images.append(len(masks))
         iterations = len(rgb_images)
         logger_padding_length = len(str(len(rgb_images)))
 
@@ -166,29 +250,54 @@ class RecordGenerator:
         else:
             valid_image_ids = None
 
-        if len(rgb_images) == len(nir_images) == len(masks):
+        if all(image == images[0] for image in images):
             for index, image in enumerate(rgb_images):
+                image_ids = []
+                coordinates = []
                 _, rgb_id, rgb_coordinates = utils.get_image_metadata(rgb_images[index])
-                _, nir_id, nir_coordinates = utils.get_image_metadata(nir_images[index])
+                image_ids.append(rgb_id)
+                coordinates.append(rgb_coordinates)
+                if self.nir_dir_path is not None:
+                    # noinspection PyUnboundLocalVariable
+                    _, nir_id, nir_coordinates = utils.get_image_metadata(nir_images[index])
+                    image_ids.append(nir_id)
+                    coordinates.append(nir_coordinates)
+                if self.ndsm_dir_path is not None:
+                    # noinspection PyUnboundLocalVariable
+                    _, ndsm_id, ndsm_coordinates = utils.get_image_metadata(ndsm_images[index])
+                    image_ids.append(ndsm_id)
+                    coordinates.append(ndsm_coordinates)
                 _, mask_id, mask_coordinates = utils.get_image_metadata(masks[index])
-                if (rgb_id == nir_id == mask_id == index and
-                        rgb_coordinates == nir_coordinates == mask_coordinates):
+                image_ids.append(mask_id)
+                coordinates.append(mask_coordinates)
+                if all(image_id == image_ids[0] for image_id in image_ids) and \
+                        all(coordinate == coordinates[0] for coordinate in coordinates):
                     if self.skip is None or self.skip is not None and index in valid_image_ids:
                         with Image.open(self.rgb_dir_path / rgb_images[index]) as file:
                             # noinspection PyTypeChecker
                             rgb_image = np.array(file)
-                        with Image.open(self.nir_dir_path / nir_images[index]) as file:
-                            # noinspection PyTypeChecker
-                            nir_image = np.array(file)
+                        if self.nir_dir_path is not None:
+                            with Image.open(self.nir_dir_path / nir_images[index]) as file:
+                                # noinspection PyTypeChecker
+                                nir_image = np.array(file)
+                        else:
+                            nir_image = None
+                        if self.ndsm_dir_path is not None:
+                            with Image.open(self.ndsm_dir_path / ndsm_images[index]) as file:
+                                # noinspection PyTypeChecker
+                                ndsm_image = np.array(file)
+                        else:
+                            ndsm_image = None
                         with Image.open(self.masks_dir_path / masks[index]) as file:
                             # noinspection PyTypeChecker
                             mask = np.array(file)
                         record_name = f'{self.record_name}_{rgb_id}_{rgb_coordinates[0]}_{rgb_coordinates[1]}.tfrecord'
                         path = self.dir_path / self.record_name / record_name
-                        RecordGenerator.export_record(rgb_image=rgb_image,
-                                                      nir_image=nir_image,
-                                                      mask=mask,
-                                                      path=path)
+                        self.export_record(rgb_image=rgb_image,
+                                           mask=mask,
+                                           path=path,
+                                           nir_image=nir_image,
+                                           ndsm_image=ndsm_image)
                         logger.info(f'iteration {index + 1:>{logger_padding_length}} / {iterations} '
                                     f'-> record with id = {index} exported')
                     else:
@@ -206,9 +315,8 @@ class RecordGenerator:
 
         metadata = {'timestamp': str(start_time.isoformat(sep=' ', timespec='seconds')),
                     'execution time': str(delta),
-                    'rgb images dir': self.rgb_dir_path.stem,
-                    'nir images dir': self.nir_dir_path.stem,
-                    'masks dir': self.masks_dir_path.stem}
+                    'nir channel': True if self.nir_dir_path is not None else False,
+                    'ndsm channel': True if self.ndsm_dir_path is not None else False}
         if self.skip is not None:
             metadata['number of iterations'] = iterations
             metadata['number of records'] = iterations - len(self.skip)
