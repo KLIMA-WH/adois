@@ -80,6 +80,7 @@ class OrthophotoDownloader:
         :rtype: None
         :raises ValueError: if image_size is not valid (not a power of base 2, its tenfold or too small/ large) or
             if bounding_box is not valid (x_1 >= x_2 or y_1 >= y_2) or
+            if the mode is not valid (neither coordinates nor a bounding box are defined) or
             if non_zero_ratio is not valid (not a value between 0 and 1)
         """
         self.dir_path = Path(dir_path)
@@ -116,6 +117,9 @@ class OrthophotoDownloader:
                                  'y_1 has to be smaller than y_2.')
         else:
             self.bounding_box = None
+
+        if self.coordinates is None and self.bounding_box is None:
+            raise ValueError('Invalid mode! Either coordinates or a bounding box have to be defined.')
 
         if shp_path is not None:
             shp_path = Path(shp_path)
@@ -340,14 +344,11 @@ class OrthophotoDownloader:
 
         :returns: None
         :rtype: None
-        :raises ValueError: if the mode is not valid (neither coordinates nor a bounding box are defined)
         """
         if self.coordinates is not None:
             self.export_orthophotos_coordinates()
-        elif self.bounding_box is not None:
-            self.export_orthophotos_bounding_box()
         else:
-            raise ValueError('Invalid mode! Either coordinates or a bounding box have to be defined.')
+            self.export_orthophotos_bounding_box()
 
     @staticmethod
     def print_info(wms_url):
