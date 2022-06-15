@@ -47,6 +47,7 @@ class RecordGenerator:
                  record_name,
                  rgb_dir_path,
                  masks_dir_path,
+                 image_size,
                  nir_dir_path=None,
                  ndsm_dir_path=None,
                  color_codes=None,
@@ -58,6 +59,7 @@ class RecordGenerator:
         :param str record_name: prefix of the record name
         :param str or Path rgb_dir_path: path to the directory of the rgb images
         :param str or Path masks_dir_path: path to the directory of the masks
+        :param int image_size: image size in pixels
         :param str or Path or None nir_dir_path: path to the directory of the nir images
         :param str or Path or None ndsm_dir_path: path to the directory of the ndsm images
         :param dict[tuple[int, int, int], int] or None color_codes: color codes for the color mapping to reduce the
@@ -72,6 +74,7 @@ class RecordGenerator:
         self.record_name = record_name
         self.rgb_dir_path = Path(rgb_dir_path)
         self.masks_dir_path = Path(masks_dir_path)
+        self.image_size = image_size
 
         if nir_dir_path is not None:
             self.nir_dir_path = Path(nir_dir_path)
@@ -109,13 +112,25 @@ class RecordGenerator:
         :rtype: np.ndarray[int]
         """
         color_map = np.full(shape=(256 * 256 * 256),
-                            fill_value=0,  # mapped value of all other colors not in the color_codes dictionary,
-                            # such as interpolation artefacts
+                            fill_value=0,
                             dtype=np.int32)
         for rgb, index in color_codes.items():
             rgb = rgb[0] * 65536 + rgb[1] * 256 + rgb[2]
             color_map[rgb] = index
         return color_map
+
+    def resize_image(self, image):
+        """Returns an resized image. Used for manually upsampling or downsampling images to an image size without
+        interpolation artefacts (nearest-neighbor interpolation is used).
+
+        :param np.ndarray[int] image: image
+        :returns: resized image
+        :rtype: np.ndarray[int]
+        """
+        resized_image = tf.image.resize(image,
+                                        size=np.array([self.image_size, self.image_size], dtype=np.int32),
+                                        method='nearest').numpy()
+        return resized_image
 
     def reduce_dimensions(self, image):
         """Returns an color mapped image with reduced dimensions (2 dimensions instead of 3 dimensions).
@@ -151,6 +166,7 @@ class RecordGenerator:
                 images.append(nir_image)
 
         if ndsm_image is not None:
+            ndsm_image = self.resize_image(ndsm_image)
             ndsm_image = self.reduce_dimensions(ndsm_image)
             ndsm_image = np.expand_dims(ndsm_image, axis=-1)
             images.append(ndsm_image)
