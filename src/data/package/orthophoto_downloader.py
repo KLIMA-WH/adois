@@ -38,7 +38,7 @@ class OrthophotoDownloader:
 
     Author: Marius Maryniak (marius.maryniak@w-hs.de)
     """
-    VALID_IMAGE_SIZE = (128, 256, 512, 1024, 2048, 4096, 1280, 2560, 5120)
+    VALID_IMAGE_SIZE = (128, 256, 512, 1024, 2048, 4096, 640, 1280, 2560, 5120)
     BANDS = 3
 
     def __init__(self,
