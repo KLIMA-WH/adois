@@ -21,7 +21,7 @@ logger_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s: %(
 
 log_dir_path = Path(__file__).parents[1] / 'logs'
 date_time = str(DateTime.now().isoformat(sep='_', timespec='seconds')).replace(':', '-')
-file_handler = logging.FileHandler(log_dir_path / f'{date_time}_orthophoto_downloader.log', mode='w')
+file_handler = logging.FileHandler(log_dir_path / f'{date_time}_remote_sensing_data_downloader.log', mode='w')
 file_handler.setFormatter(logger_formatter)
 logger.addHandler(file_handler)
 
@@ -32,8 +32,8 @@ logger.addHandler(console_handler)
 warnings.filterwarnings(action='ignore', message='shapes are outside bounds of raster.')
 
 
-class OrthophotoDownloader:
-    """OrthophotoDownloader
+class RemoteSensingDataDownloader:
+    """RemoteSensingDataDownloader
     TODO: class documentation
 
     Author: Marius Maryniak (marius.maryniak@w-hs.de)
@@ -91,11 +91,11 @@ class OrthophotoDownloader:
         self.epsg_code = epsg_code
         self.resolution = resolution
 
-        if image_size in OrthophotoDownloader.VALID_IMAGE_SIZE:
+        if image_size in RemoteSensingDataDownloader.VALID_IMAGE_SIZE:
             self.image_size = image_size
         else:
             raise ValueError('Invalid image_size! image_size has to be a power of base 2 or its tenfold. Try '
-                             f'{[*OrthophotoDownloader.VALID_IMAGE_SIZE]}.')
+                             f'{[*RemoteSensingDataDownloader.VALID_IMAGE_SIZE]}.')
         self.image_size_meters = self.resolution * self.image_size
 
         if coordinates_path is not None:
@@ -139,7 +139,7 @@ class OrthophotoDownloader:
         self.additional_info = additional_info
         (self.dir_path / self.image_name).mkdir(exist_ok=True)
 
-    def get_orthophoto(self, coordinates):
+    def get_image(self, coordinates):
         """Returns an image given its coordinates of the top left corner. If necessary, the image is getting masked
         with the shapes of the optional shape file.
 
@@ -170,7 +170,7 @@ class OrthophotoDownloader:
                 with memory_file.open(driver='GTiff',
                                       width=self.image_size,
                                       height=self.image_size,
-                                      count=OrthophotoDownloader.BANDS,
+                                      count=RemoteSensingDataDownloader.BANDS,
                                       crs=f'epsg:{self.epsg_code}',
                                       transform=transform,
                                       dtype=image.dtype,
@@ -183,11 +183,11 @@ class OrthophotoDownloader:
             return image_masked
         return image
 
-    def export_orthophoto(self,
-                          image,
-                          path,
-                          coordinates):
-        """Exports an image from the get_orthophoto() method. If necessary, a world file with georeferencing metadata
+    def export_image(self,
+                     image,
+                     path,
+                     coordinates):
+        """Exports an image from the get_image() method. If necessary, a world file with georeferencing metadata
         is created in the same directory as the image itself or georeferencing metadata is embedded into the image.
 
         :param np.ndarray[int] image: image
@@ -208,7 +208,7 @@ class OrthophotoDownloader:
                           driver='GTiff',
                           width=self.image_size,
                           height=self.image_size,
-                          count=OrthophotoDownloader.BANDS,
+                          count=RemoteSensingDataDownloader.BANDS,
                           crs=f'epsg:{self.epsg_code}',
                           transform=transform,
                           dtype=image.dtype,
@@ -225,7 +225,7 @@ class OrthophotoDownloader:
                              resolution=self.resolution,
                              coordinates=coordinates)
 
-    def export_orthophotos_coordinates(self):
+    def export_images_coordinates(self):
         """Exports all images of an area given a dictionary of ids and coordinates to the images directory.
         Each image name consists of the following attributes separated by an underscore:
         'prefix_id_x_y.tiff'
@@ -242,12 +242,12 @@ class OrthophotoDownloader:
 
         for image_id, coordinates in self.coordinates.items():
             coordinates = tuple(coordinates)
-            image = self.get_orthophoto(coordinates)
+            image = self.get_image(coordinates)
             image_name = f'{self.image_name}_{image_id}_{coordinates[0]}_{coordinates[1]}.tiff'
             path = self.dir_path / self.image_name / image_name
-            self.export_orthophoto(image,
-                                   path=path,
-                                   coordinates=coordinates)
+            self.export_image(image,
+                              path=path,
+                              coordinates=coordinates)
             logger.info(f'iteration {iteration:>{logger_padding_length}} / {iterations} '
                         f'-> image with id = {image_id} exported')
             iteration += 1
@@ -270,7 +270,7 @@ class OrthophotoDownloader:
         utils.export_json(self.dir_path / f'{self.image_name}_coordinates.json',
                           metadata=self.coordinates)
 
-    def export_orthophotos_bounding_box(self):
+    def export_images_bounding_box(self):
         """Exports all images of an area given its bounding box to the images directory.
         Each image name consists of the following attributes separated by an underscore:
         'prefix_id_x_y.tiff'
@@ -292,7 +292,7 @@ class OrthophotoDownloader:
         iteration = 1
         image_id = 0
 
-        non_zero_threshold = self.image_size ** 2 * OrthophotoDownloader.BANDS * self.non_zero_ratio
+        non_zero_threshold = self.image_size ** 2 * RemoteSensingDataDownloader.BANDS * self.non_zero_ratio
 
         metadata_coordinates = {}
 
@@ -300,13 +300,13 @@ class OrthophotoDownloader:
             for column in range(columns):
                 coordinates = (round(self.bounding_box[0] + column * self.image_size_meters, 2),
                                round(self.bounding_box[1] + (row + 1) * self.image_size_meters, 2))
-                image = self.get_orthophoto(coordinates)
+                image = self.get_image(coordinates)
                 if np.any(image) if self.non_zero_ratio == 0 else np.count_nonzero(image) > non_zero_threshold:
                     image_name = f'{self.image_name}_{image_id}_{coordinates[0]}_{coordinates[1]}.tiff'
                     path = self.dir_path / self.image_name / image_name
-                    self.export_orthophoto(image,
-                                           path=path,
-                                           coordinates=coordinates)
+                    self.export_image(image,
+                                      path=path,
+                                      coordinates=coordinates)
                     metadata_coordinates[image_id] = coordinates
                     logger.info(f'iteration {iteration:>{logger_padding_length}} / {iterations} '
                                 f'-> image with id = {image_id} exported')
@@ -346,9 +346,9 @@ class OrthophotoDownloader:
         :rtype: None
         """
         if self.coordinates is not None:
-            self.export_orthophotos_coordinates()
+            self.export_images_coordinates()
         else:
-            self.export_orthophotos_bounding_box()
+            self.export_images_bounding_box()
 
     @staticmethod
     def print_info(wms_url):
@@ -394,19 +394,19 @@ class OrthophotoDownloader:
     @staticmethod
     def create_coordinates(dir_path):
         """Creates a coordinates file (.json) in the parent directory containing the ids and coordinates
-        of all orthophotos in the images directory.
+        of all images in the images directory.
 
         :param str or Path dir_path: path to the directory
         :returns: None
         :rtype: None
         """
         dir_path = Path(dir_path)
-        orthophotos = natsorted([x.name for x in dir_path.iterdir() if x.suffix == '.tiff'])
+        images = natsorted([x.name for x in dir_path.iterdir() if x.suffix == '.tiff'])
 
         metadata_coordinates = {}
 
-        for file in orthophotos:
-            _, image_id, coordinates = utils.get_image_metadata(file)
+        for image in images:
+            _, image_id, coordinates = utils.get_image_metadata(image)
             metadata_coordinates[image_id] = coordinates
 
         utils.export_json(dir_path.parents[0] / f'{dir_path.name}_coordinates.json',

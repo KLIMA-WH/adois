@@ -39,7 +39,7 @@ class MaskGenerator:
     def __init__(self,
                  dir_path,
                  mask_name,
-                 orthophotos_dir_path,
+                 images_dir_path,
                  mask_shp_path,
                  epsg_code,
                  resolution,
@@ -53,7 +53,7 @@ class MaskGenerator:
 
         :param str or Path dir_path: path to the directory
         :param str mask_name: prefix of the mask name
-        :param str or Path orthophotos_dir_path: path to the directory of the orthophotos
+        :param str or Path images_dir_path: path to the images directory
         :param str or Path mask_shp_path: path to the shape file of the mask that needs to be rasterized
         :param int epsg_code: epsg code of the coordinate reference system
         :param float resolution: resolution in meters per pixel
@@ -70,7 +70,7 @@ class MaskGenerator:
         """
         self.dir_path = Path(dir_path)
         self.mask_name = mask_name
-        self.orthophotos_dir_path = Path(orthophotos_dir_path)
+        self.images_dir_path = Path(images_dir_path)
         self.mask_shp_path = Path(mask_shp_path)
         self.epsg_code = epsg_code
         self.resolution = resolution
@@ -91,10 +91,10 @@ class MaskGenerator:
         (self.dir_path / self.mask_name).mkdir(exist_ok=True)
 
     def get_mask(self, path):
-        """Returns an image of the mask to a corresponding orthophoto. If necessary, the image is getting masked
+        """Returns an image of the mask to a corresponding image. If necessary, the image is getting masked
         with the shapes of the optional shape file.
 
-        :param str or Path path: path to the image of the corresponding orthophoto
+        :param str or Path path: path to the corresponding image
         :returns: image, id and coordinates
         :rtype: (np.ndarray[int], int, (float, float))
         """
@@ -196,12 +196,12 @@ class MaskGenerator:
         """
         start_time = DateTime.now()
 
-        orthophotos = natsorted([x.name for x in self.orthophotos_dir_path.iterdir() if x.suffix == '.tiff'])
-        iterations = len(orthophotos)
-        logger_padding_length = len(str(len(orthophotos)))
+        images = natsorted([x.name for x in self.images_dir_path.iterdir() if x.suffix == '.tiff'])
+        iterations = len(images)
+        logger_padding_length = len(str(len(images)))
 
-        for index, file in enumerate(orthophotos):
-            mask, image_id, coordinates = self.get_mask(self.orthophotos_dir_path / file)
+        for index, image in enumerate(images):
+            mask, image_id, coordinates = self.get_mask(self.images_dir_path / image)
             mask_name = f'{self.mask_name}_{image_id}_{coordinates[0]}_{coordinates[1]}.tiff'
             path = self.dir_path / self.mask_name / mask_name
             self.export_mask(mask,
