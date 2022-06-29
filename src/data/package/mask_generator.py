@@ -91,7 +91,7 @@ class MaskGenerator:
         (self.dir_path / self.mask_name).mkdir(exist_ok=True)
 
     def get_mask(self, path):
-        """Returns an image of the mask to a corresponding image. If necessary, the image is getting masked
+        """Returns an image of the mask to the corresponding image. If necessary, the image is getting masked
         with the shapes of the optional shape file.
 
         :param str or Path path: path to the corresponding image
