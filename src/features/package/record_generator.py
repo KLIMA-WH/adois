@@ -47,7 +47,6 @@ class RecordGenerator:
                  record_name,
                  rgb_dir_path,
                  masks_dir_path,
-                 image_size,
                  nir_dir_path=None,
                  ndsm_dir_path=None,
                  color_codes=None,
@@ -59,7 +58,6 @@ class RecordGenerator:
         :param str record_name: prefix of the record name
         :param str or Path rgb_dir_path: path to the directory of the rgb images
         :param str or Path masks_dir_path: path to the directory of the masks
-        :param int image_size: image size in pixels
         :param str or Path or None nir_dir_path: path to the directory of the nir images
         :param str or Path or None ndsm_dir_path: path to the directory of the ndsm images
         :param dict[tuple[int, int, int], int] or None color_codes: color codes for the color mapping to reduce the
@@ -74,7 +72,6 @@ class RecordGenerator:
         self.record_name = record_name
         self.rgb_dir_path = Path(rgb_dir_path)
         self.masks_dir_path = Path(masks_dir_path)
-        self.image_size = image_size
 
         if nir_dir_path is not None:
             self.nir_dir_path = Path(nir_dir_path)
@@ -88,6 +85,8 @@ class RecordGenerator:
             self.color_map = self.get_color_map(color_codes)
         else:
             self.ndsm_dir_path = None
+
+        self.image_resize = None
 
         if skip_file_path is not None:
             skip_file_path = Path(skip_file_path)
@@ -128,7 +127,7 @@ class RecordGenerator:
         :rtype: np.ndarray[int]
         """
         resized_image = tf.image.resize(image,
-                                        size=np.array([self.image_size, self.image_size], dtype=np.int32),
+                                        size=np.array([self.image_resize, self.image_resize], dtype=np.int32),
                                         method='nearest').numpy()
         return resized_image
 
@@ -166,7 +165,8 @@ class RecordGenerator:
                 images.append(nir_image)
 
         if ndsm_image is not None:
-            ndsm_image = self.resize_image(ndsm_image)
+            if self.image_resize is not None:
+                ndsm_image = self.resize_image(ndsm_image)
             ndsm_image = self.reduce_dimensions(ndsm_image)
             ndsm_image = np.expand_dims(ndsm_image, axis=-1)
             images.append(ndsm_image)
@@ -250,12 +250,22 @@ class RecordGenerator:
         images = []
         rgb_images = natsorted([x.name for x in self.rgb_dir_path.iterdir() if x.suffix == '.tiff'])
         images.append(len(rgb_images))
+        with Image.open(self.rgb_dir_path / rgb_images[0]) as file:
+            # noinspection PyTypeChecker
+            rgb_image_size = np.array(file).shape[0]
         if self.nir_dir_path is not None:
             nir_images = natsorted([x.name for x in self.nir_dir_path.iterdir() if x.suffix == '.tiff'])
             images.append(len(nir_images))
         if self.ndsm_dir_path is not None:
             ndsm_images = natsorted([x.name for x in self.ndsm_dir_path.iterdir() if x.suffix == '.tiff'])
             images.append(len(ndsm_images))
+            with Image.open(self.ndsm_dir_path / ndsm_images[0]) as file:
+                # noinspection PyTypeChecker
+                ndsm_image_size = np.array(file).shape[0]
+            if rgb_image_size == ndsm_image_size:
+                self.image_resize = None
+            else:
+                self.image_resize = rgb_image_size
         masks = natsorted([x.name for x in self.masks_dir_path.iterdir() if x.suffix == '.tiff'])
         images.append(len(masks))
         iterations = len(rgb_images)
