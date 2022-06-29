@@ -127,7 +127,7 @@ class RecordGenerator:
         :rtype: np.ndarray[int]
         """
         resized_image = tf.image.resize(image,
-                                        size=np.array([self.image_resize, self.image_resize], dtype=np.int32),
+                                        size=(self.image_resize, self.image_resize),
                                         method='nearest').numpy()
         return resized_image
 
