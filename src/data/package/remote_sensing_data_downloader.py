@@ -39,7 +39,7 @@ class RemoteSensingDataDownloader:
     Author: Marius Maryniak (marius.maryniak@w-hs.de)
     """
     VALID_IMAGE_SIZE = (128, 256, 512, 1024, 2048, 4096, 640, 1280, 2560, 5120)
-    BANDS = 3
+    CHANNELS = 3
 
     def __init__(self,
                  dir_path,
@@ -170,7 +170,7 @@ class RemoteSensingDataDownloader:
                 with memory_file.open(driver='GTiff',
                                       width=self.image_size,
                                       height=self.image_size,
-                                      count=RemoteSensingDataDownloader.BANDS,
+                                      count=RemoteSensingDataDownloader.CHANNELS,
                                       crs=f'epsg:{self.epsg_code}',
                                       transform=transform,
                                       dtype=image.dtype,
@@ -208,7 +208,7 @@ class RemoteSensingDataDownloader:
                           driver='GTiff',
                           width=self.image_size,
                           height=self.image_size,
-                          count=RemoteSensingDataDownloader.BANDS,
+                          count=RemoteSensingDataDownloader.CHANNELS,
                           crs=f'epsg:{self.epsg_code}',
                           transform=transform,
                           dtype=image.dtype,
@@ -292,7 +292,7 @@ class RemoteSensingDataDownloader:
         iteration = 1
         image_id = 0
 
-        non_zero_threshold = self.image_size ** 2 * RemoteSensingDataDownloader.BANDS * self.non_zero_ratio
+        non_zero_threshold = self.image_size ** 2 * RemoteSensingDataDownloader.CHANNELS * self.non_zero_ratio
 
         metadata_coordinates = {}
 
