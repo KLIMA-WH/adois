@@ -58,12 +58,12 @@ class Pipeline:
                 self.record_ids = []
                 for dir_path in self.dir_paths:
                     with open(dir_path / Pipeline.TRAIN_FILE, mode='r') as file:
-                        self.record_ids.append(json.load(file))
+                        self.record_ids.extend(json.load(file))
             elif self.mode == 'validate':
                 self.record_ids = []
                 for dir_path in self.dir_paths:
                     with open(dir_path / Pipeline.VALIDATE_FILE, mode='r') as file:
-                        self.record_ids.append(json.load(file))
+                        self.record_ids.extend(json.load(file))
             else:
                 self.record_ids = None
         else:
@@ -120,20 +120,15 @@ class Pipeline:
         :returns: dataset
         :rtype: tf.data.Dataset
         """
-        datasets = []
+        records = []
         for dir_path in self.dir_paths:
-            records = natsorted([x.name for x in dir_path.iterdir() if x.suffix == '.tfrecord'])
+            records_in_dir = natsorted([x.name for x in dir_path.iterdir() if x.suffix == '.tfrecord'])
             if self.record_ids is not None:
-                records = [record for record in records if record in self.record_ids]
-            records = [str(dir_path / record) for record in records]
-            dataset = tf.data.TFRecordDataset(records)
-            dataset = dataset.map(parsing_function)
-            datasets.append(dataset)
-        # Based on: https://stackoverflow.com/a/68879088
-        datasets = tf.data.Dataset.from_tensor_slices(datasets)
-        dataset = datasets.interleave(lambda x: x,
-                                      cycle_length=1,
-                                      num_parallel_calls=tf.data.AUTOTUNE)
+                records_in_dir = [record for record in records_in_dir if record in self.record_ids]
+            records_in_dir = [str(dir_path / record) for record in records_in_dir]
+            records.extend(records_in_dir)
+        dataset = tf.data.TFRecordDataset(records)
+        dataset = dataset.map(parsing_function)
         return dataset
 
     @tf.function
