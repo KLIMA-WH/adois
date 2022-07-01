@@ -268,11 +268,12 @@ class Pipeline:
         """
         dataset = self.get_dataset(parsing_function=self.parse_record)
 
-        dataset = dataset.map(lambda image, mask: self.patch_example(image, mask),
-                              num_parallel_calls=tf.data.AUTOTUNE)
-        data_options = tf.data.Options()
-        data_options.experimental_distribute.auto_shard_policy = tf.data.experimental.AutoShardPolicy.DATA
-        dataset = dataset.with_options(data_options).unbatch()
+        if self.patch_size is not None:
+            dataset = dataset.map(lambda image, mask: self.patch_example(image, mask),
+                                  num_parallel_calls=tf.data.AUTOTUNE)
+            data_options = tf.data.Options()
+            data_options.experimental_distribute.auto_shard_policy = tf.data.experimental.AutoShardPolicy.DATA
+            dataset = dataset.with_options(data_options).unbatch()
 
         if self.mode == 'train':
             if self.cache:
