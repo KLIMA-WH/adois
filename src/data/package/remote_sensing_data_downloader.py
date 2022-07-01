@@ -107,7 +107,7 @@ class RemoteSensingDataDownloader:
             self.coordinates = None
 
         if bounding_box is not None:
-            if bounding_box[0] < bounding_box[2] or bounding_box[1] < bounding_box[3]:
+            if bounding_box[0] < bounding_box[2] and bounding_box[1] < bounding_box[3]:
                 self.bounding_box = (round(bounding_box[0], 2),
                                      round(bounding_box[1], 2),
                                      round(bounding_box[2], 2),
