@@ -1,12 +1,15 @@
 import json
 import math
 from pathlib import Path
+from random import shuffle
 # noinspection PyUnresolvedReferences
 from typing import Callable
 
 import tensorflow as tf
 import tensorflow_addons as tfa
 from natsort import natsorted
+
+from src.utils.package import utils
 
 
 class Pipeline:
@@ -15,8 +18,8 @@ class Pipeline:
 
     Author: Marius Maryniak (marius.maryniak@w-hs.de)
     """
-    TRAIN_FILE = 'train.json'
-    VALIDATE_FILE = 'validate.json'
+    TRAIN_FILE = 'train_ids.json'
+    VALIDATE_FILE = 'validate_ids.json'
     SHUFFLE_BUFFER_SIZE = 1000
     PI = tf.constant(math.pi)
 
@@ -32,9 +35,9 @@ class Pipeline:
         """Constructor method
 
         :param list[str] or list[Path] dir_paths: list of paths to the directories
-        :param str or None mode: 'train': records are filtered according to the record ids in train.json and
+        :param str or None mode: 'train': records are filtered according to the record ids in train_ids.json and
             augmentation is applied to each example. 'validate': records are filtered according to the record ids
-            in validate.json. None: records are not filtered
+            in validate_ids.json. None: records are not filtered
         :param int or None patch_size: patch size (each example is patched into patches with 50% overlap)
         :param dict[str, float] or None augmentation_config: configuration of the augmentation probabilities
             (the key of the dictionary is the augmentation type ('flip', 'rotation', 'noise', 'brightness', 'contrast',
@@ -298,3 +301,27 @@ class Pipeline:
 
         dataset = dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
         return dataset
+
+    @staticmethod
+    def split_records(dir_paths, ratio):
+        """Exports split files (train_ids.json and validate_ids.json) for each directory containing the record ids.
+
+        :param list[str] or list[Path] dir_paths: list of paths to the directories
+        :param float ratio: ratio of number of train records to number of records
+        :returns: None
+        :rtype: None
+        :raises FileExistsError: if split files (train_ids.json and validate_ids.json) already exist
+        """
+        dir_paths = [Path(dir_path) for dir_path in dir_paths]
+        for dir_path in dir_paths:
+            if not (dir_path / Pipeline.TRAIN_FILE).is_file() and not (dir_path / Pipeline.VALIDATE_FILE).is_file():
+                records = natsorted([x.name for x in dir_path.iterdir() if x.suffix == '.tfrecord'])
+                shuffle(records)
+                train_ids = natsorted(records[:int(len(records) * ratio)])
+                validate_ids = natsorted(records[int(len(records) * ratio):])
+                utils.export_json(dir_path / Pipeline.TRAIN_FILE,
+                                  metadata=train_ids)
+                utils.export_json(dir_path / Pipeline.VALIDATE_FILE,
+                                  metadata=validate_ids)
+            else:
+                raise FileExistsError('Split files (train_ids.json and validate_ids.json) already exist!')
