@@ -26,6 +26,7 @@ class Pipeline:
     def __init__(self,
                  dir_paths,
                  mode,
+                 record_size,
                  patch_size,
                  augmentation_config,
                  resize,
@@ -38,6 +39,7 @@ class Pipeline:
         :param str or None mode: 'train': records are filtered according to the record ids in train_ids.json and
             augmentation is applied to each example. 'validate': records are filtered according to the record ids
             in validate_ids.json. None: records are not filtered
+        :param int record_size: record size
         :param int or None patch_size: patch size (each example is patched into patches with 50% overlap)
         :param dict[str, float] or None augmentation_config: configuration of the augmentation probabilities
             (the key of the dictionary is the augmentation type ('flip', 'rotation', 'noise', 'brightness', 'contrast',
@@ -68,6 +70,10 @@ class Pipeline:
                 self.record_ids = None
         else:
             raise ValueError(f"Invalid mode! mode has to be 'train', 'validate' or None.")
+
+        self.record_size = record_size
+        self.image_size = [self.record_size, self.record_size, 5]
+        self.mask_size = [self.record_size, self.record_size, 1]
 
         if patch_size is not None:
             self.patch_size = patch_size
@@ -113,6 +119,22 @@ class Pipeline:
         mask = tf.io.parse_tensor(record['mask'], tf.uint8)
         return image, mask
 
+    @tf.function
+    def ensure_shape(self,
+                     image,
+                     mask):
+        """Returns an image and the corresponding mask with valid dimensions.
+
+        :param tf.Tensor[int] image: image
+        :param tf.Tensor[int] mask: mask
+        :returns: image and mask
+        :rtype: (tf.Tensor[int], tf.Tensor[int])
+        """
+        mask = mask[..., tf.newaxis]
+        image = tf.ensure_shape(image, self.image_size)
+        mask = tf.ensure_shape(mask, self.mask_size)
+        return image, mask
+
     def get_dataset(self, parsing_function):
         """Returns a dateset of all records in the directories.
 
@@ -129,6 +151,8 @@ class Pipeline:
             records.extend(records_in_dir)
         dataset = tf.data.TFRecordDataset(records)
         dataset = dataset.map(parsing_function)
+        dataset = dataset.map(lambda image, mask: self.ensure_shape(image, mask),
+                              num_parallel_calls=tf.data.AUTOTUNE)
         return dataset
 
     @tf.function
