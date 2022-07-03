@@ -21,7 +21,7 @@ class Pipeline:
     TRAIN_FILE = 'train_ids.json'
     VALIDATE_FILE = 'validate_ids.json'
     SHUFFLE_BUFFER_SIZE = 1000
-    PI = tf.constant(math.pi)
+    PI = math.pi
 
     def __init__(self,
                  dir_paths,
@@ -199,7 +199,7 @@ class Pipeline:
             mask = tf.image.flip_left_right(mask)
 
         if 'rotation' in self.augmentation_config and tf.random.uniform([]) < self.augmentation_config['rotation']:
-            angle = tf.random.uniform([], maxval=tf.constant(2 * Pipeline.PI))
+            angle = tf.random.uniform([], maxval=2 * Pipeline.PI)
             image = tfa.image.rotate(image, angle)
             mask = tfa.image.rotate(mask, angle)
 
@@ -208,35 +208,39 @@ class Pipeline:
         ndsm_channel = image[..., 4:]
 
         if 'noise' in self.augmentation_config and tf.random.uniform([]) < self.augmentation_config['noise']:
-            rgb_noise = tf.random.uniform(shape=tf.shape(rgb_channels),
+            rgb_noise = tf.random.uniform(shape=rgb_channels.shape,
                                           minval=tf.constant(-5),
                                           maxval=tf.constant(5),
-                                          dtype=tf.int16)
-            nir_noise = tf.random.uniform(shape=tf.shape(nir_channel),
+                                          dtype=tf.int32)
+            nir_noise = tf.random.uniform(shape=nir_channel.shape,
                                           minval=tf.constant(-5),
                                           maxval=tf.constant(5),
-                                          dtype=tf.int16)
+                                          dtype=tf.int32)
+            rgb_channels = tf.cast(rgb_channels, tf.int32)
+            nir_channel = tf.cast(nir_channel, tf.int32)
             rgb_channels = rgb_channels + rgb_noise
             nir_channel = nir_channel + nir_noise
             rgb_channels = tf.clip_by_value(rgb_channels, tf.constant(0), tf.constant(255))
             nir_channel = tf.clip_by_value(nir_channel, tf.constant(0), tf.constant(255))
+            rgb_channels = tf.cast(rgb_channels, tf.uint8)
+            nir_channel = tf.cast(nir_channel, tf.uint8)
 
         if 'brightness' in self.augmentation_config and tf.random.uniform([]) < self.augmentation_config['brightness']:
-            rgb_channels = tf.image.random_brightness(rgb_channels, tf.constant(50))
-            nir_channel = tf.image.random_brightness(nir_channel, tf.constant(50))
+            rgb_channels = tf.image.random_brightness(rgb_channels, 50)
+            nir_channel = tf.image.random_brightness(nir_channel, 50)
 
         if 'contrast' in self.augmentation_config and tf.random.uniform([]) < self.augmentation_config['contrast']:
-            rgb_channels = tf.image.random_contrast(rgb_channels, tf.constant(.7), tf.constant(1.5))
-            nir_channel = tf.image.random_contrast(nir_channel, tf.constant(.7), tf.constant(1.5))
+            rgb_channels = tf.image.random_contrast(rgb_channels, .7, 1.5)
+            nir_channel = tf.image.random_contrast(nir_channel, .7, 1.5)
 
         if 'hue' in self.augmentation_config and tf.random.uniform([]) < self.augmentation_config['hue']:
-            rgb_channels = tf.image.random_hue(rgb_channels, tf.constant(.08))
+            rgb_channels = tf.image.random_hue(rgb_channels, .08)
 
         if 'saturation' in self.augmentation_config and tf.random.uniform([]) < self.augmentation_config['saturation']:
-            rgb_channels = tf.image.random_saturation(rgb_channels, tf.constant(.7), tf.constant(1.3))
+            rgb_channels = tf.image.random_saturation(rgb_channels, .7, 1.3)
 
         image = tf.concat([rgb_channels, nir_channel, ndsm_channel], axis=tf.constant(-1))
-        image = tf.clip_by_value(image, tf.constant(0), tf.constant(255))
+        image = tf.clip_by_value(image, 0, 255)
         return image, mask
 
     @tf.function
