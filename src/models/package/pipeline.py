@@ -1,5 +1,6 @@
 import json
 import math
+import warnings
 from pathlib import Path
 from random import shuffle
 # noinspection PyUnresolvedReferences
@@ -77,6 +78,9 @@ class Pipeline:
 
         if patch_size is not None:
             self.patch_size = patch_size
+            if self.record_size % self.patch_size:
+                warnings.warn('record_size is not evenly divisible by patch_size! Unused pixels remain after patching '
+                              'the example.')
             self.patch_sizes = [1, self.patch_size, self.patch_size, 1]
             self.patch_strides = [1, self.patch_size / 2, self.patch_size / 2, 1]
             self.patch_reshape_image = tf.constant([-1, self.patch_size, self.patch_size, 5])
