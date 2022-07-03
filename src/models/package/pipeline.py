@@ -39,12 +39,12 @@ class Pipeline:
         :param str or None mode: 'train': records are filtered according to the record ids in train_ids.json and
             augmentation is applied to each example. 'validate': records are filtered according to the record ids
             in validate_ids.json. None: records are not filtered
-        :param int record_size: record size
-        :param int or None patch_size: patch size (each example is patched into patches with 50% overlap)
+        :param int record_size: record size in pixels
+        :param int or None patch_size: patch size in pixels (each example is patched into patches with 50% overlap)
         :param dict[str, float] or None augmentation_config: configuration of the augmentation probabilities
             (the key of the dictionary is the augmentation type ('flip', 'rotation', 'noise', 'brightness', 'contrast',
             'hue', 'saturation') and the value of the dictionary is the corresponding probability (default is .5))
-        :param int or None resize: image size to resize the image and the mask to
+        :param int or None resize: image size in pixels to resize the image and the mask to
         :param int classes: number of numerical classes (one hot depth)
         :param int or None batch_size: batch size
         :param bool cache: if True, the dataset is cached
