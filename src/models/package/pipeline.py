@@ -213,12 +213,12 @@ class Pipeline:
 
         if 'noise' in self.augmentation_config and tf.random.uniform([]) < self.augmentation_config['noise']:
             rgb_noise = tf.random.uniform(shape=rgb_channels.shape,
-                                          minval=tf.constant(-5),
-                                          maxval=tf.constant(5),
+                                          minval=tf.constant(-10),
+                                          maxval=tf.constant(10),
                                           dtype=tf.int32)
             nir_noise = tf.random.uniform(shape=nir_channel.shape,
-                                          minval=tf.constant(-5),
-                                          maxval=tf.constant(5),
+                                          minval=tf.constant(-10),
+                                          maxval=tf.constant(10),
                                           dtype=tf.int32)
             rgb_channels = tf.cast(rgb_channels, tf.int32)
             nir_channel = tf.cast(nir_channel, tf.int32)
@@ -230,18 +230,18 @@ class Pipeline:
             nir_channel = tf.cast(nir_channel, tf.uint8)
 
         if 'brightness' in self.augmentation_config and tf.random.uniform([]) < self.augmentation_config['brightness']:
-            rgb_channels = tf.image.random_brightness(rgb_channels, 50)
-            nir_channel = tf.image.random_brightness(nir_channel, 50)
+            rgb_channels = tf.image.random_brightness(rgb_channels, .1)
+            nir_channel = tf.image.random_brightness(nir_channel, .1)
 
         if 'contrast' in self.augmentation_config and tf.random.uniform([]) < self.augmentation_config['contrast']:
-            rgb_channels = tf.image.random_contrast(rgb_channels, .7, 1.5)
-            nir_channel = tf.image.random_contrast(nir_channel, .7, 1.5)
+            rgb_channels = tf.image.random_contrast(rgb_channels, .75, 1.25)
+            nir_channel = tf.image.random_contrast(nir_channel, .75, 1.25)
 
         if 'hue' in self.augmentation_config and tf.random.uniform([]) < self.augmentation_config['hue']:
-            rgb_channels = tf.image.random_hue(rgb_channels, .08)
+            rgb_channels = tf.image.random_hue(rgb_channels, .05)
 
         if 'saturation' in self.augmentation_config and tf.random.uniform([]) < self.augmentation_config['saturation']:
-            rgb_channels = tf.image.random_saturation(rgb_channels, .7, 1.3)
+            rgb_channels = tf.image.random_saturation(rgb_channels, .75, 1.25)
 
         image = tf.concat([rgb_channels, nir_channel, ndsm_channel], axis=tf.constant(-1))
         image = tf.clip_by_value(image, 0, 255)
