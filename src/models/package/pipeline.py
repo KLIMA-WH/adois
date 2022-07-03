@@ -214,27 +214,21 @@ class Pipeline:
             image = tfa.image.rotate(image, angle)
             mask = tfa.image.rotate(mask, angle)
 
-        rgb_channels = image[..., :3]
-        nir_channel = image[..., 3:4]
+        rgbi_channels = image[..., :4]
         ndsm_channel = image[..., 4:]
 
         if 'noise' in self.augmentation_config and tf.random.uniform([]) < self.augmentation_config['noise']:
-            rgb_noise = tf.random.uniform(shape=rgb_channels.shape,
-                                          minval=tf.constant(-10),
-                                          maxval=tf.constant(10),
-                                          dtype=tf.int32)
-            nir_noise = tf.random.uniform(shape=nir_channel.shape,
-                                          minval=tf.constant(-10),
-                                          maxval=tf.constant(10),
-                                          dtype=tf.int32)
-            rgb_channels = tf.cast(rgb_channels, tf.int32)
-            nir_channel = tf.cast(nir_channel, tf.int32)
-            rgb_channels = rgb_channels + rgb_noise
-            nir_channel = nir_channel + nir_noise
-            rgb_channels = tf.clip_by_value(rgb_channels, tf.constant(0), tf.constant(255))
-            nir_channel = tf.clip_by_value(nir_channel, tf.constant(0), tf.constant(255))
-            rgb_channels = tf.cast(rgb_channels, tf.uint8)
-            nir_channel = tf.cast(nir_channel, tf.uint8)
+            rgbi_noise = tf.random.uniform(shape=rgbi_channels.shape,
+                                           minval=tf.constant(-10),
+                                           maxval=tf.constant(10),
+                                           dtype=tf.int32)
+            rgbi_channels = tf.cast(rgbi_channels, tf.int32)
+            rgbi_channels = rgbi_channels + rgbi_noise
+            rgbi_channels = tf.clip_by_value(rgbi_channels, tf.constant(0), tf.constant(255))
+            rgbi_channels = tf.cast(rgbi_channels, tf.uint8)
+
+        rgb_channels = rgbi_channels[..., :3]
+        nir_channel = rgbi_channels[..., 3:]
 
         if 'brightness' in self.augmentation_config and tf.random.uniform([]) < self.augmentation_config['brightness']:
             rgb_channels = tf.image.random_brightness(rgb_channels, .1)
