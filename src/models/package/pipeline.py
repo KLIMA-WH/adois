@@ -88,8 +88,7 @@ class Pipeline:
         if augmentation_config is not None:
             self.augmentation_config = augmentation_config
         else:
-            self.augmentation_config = {'horizontal_flip': .5,
-                                        'vertical_flip': .5,
+            self.augmentation_config = {'flip': .5,
                                         'rotation': .5,
                                         'noise': .5,
                                         'brightness': .5,
@@ -223,16 +222,9 @@ class Pipeline:
         :returns: image and mask
         :rtype: (tf.Tensor[int], tf.Tensor[int])
         """
-
-        if 'horizontal_flip' in self.augmentation_config and \
-                tf.random.uniform([]) < self.augmentation_config['horizontal_flip']:
+        if 'flip' in self.augmentation_config and tf.random.uniform([]) < self.augmentation_config['flip']:
             image = tf.image.flip_left_right(image)
             mask = tf.image.flip_left_right(mask)
-
-        if 'vertical_flip' in self.augmentation_config and \
-                tf.random.uniform([]) < self.augmentation_config['vertical_flip']:
-            image = tf.image.flip_up_down(image)
-            mask = tf.image.flip_up_down(mask)
 
         if 'rotation' in self.augmentation_config and tf.random.uniform([]) < self.augmentation_config['rotation']:
             angle = tf.random.uniform([], maxval=2 * Pipeline.PI)
