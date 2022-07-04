@@ -187,6 +187,34 @@ class Pipeline:
         return image_patches, mask_patches
 
     @tf.function
+    def resize_example(self,
+                       image,
+                       mask):
+        """Returns an resized image and the corresponding resized mask.
+
+        :param tf.Tensor[int] image: image
+        :param tf.Tensor[int] mask: mask
+        :returns: image and mask
+        :rtype: (tf.Tensor[int], tf.Tensor[int])
+        """
+        rgbi_channels = image[..., :4]
+        ndsm_channel = image[..., 4:]
+        rgbi_channels = tf.image.resize(rgbi_channels,
+                                        size=self.resize,
+                                        method='bilinear')
+        ndsm_channel = tf.image.resize(ndsm_channel,
+                                       size=self.resize,
+                                       method='nearest')
+        rgbi_channels = tf.math.round(rgbi_channels)
+        rgbi_channels = tf.cast(rgbi_channels, tf.uint8)
+        image = tf.concat([rgbi_channels, ndsm_channel], axis=tf.constant(-1))
+
+        mask = tf.image.resize(mask,
+                               size=self.resize,
+                               method='nearest')
+        return image, mask
+
+    @tf.function
     def augment_example(self,
                         image,
                         mask):
@@ -249,31 +277,16 @@ class Pipeline:
         return image, mask
 
     @tf.function
-    def resize_and_normalize_example(self,
-                                     image,
-                                     mask):
-        """Returns an resized and normalized image and the corresponding resized and normalized mask.
+    def normalize_example(self,
+                          image,
+                          mask):
+        """Returns an normalized image and the corresponding normalized mask.
 
         :param tf.Tensor[int] image: image
-        :param tf.Tensor[int] mask: mask
+        :param tf.Tensor[int] mask: mask (for mapping purposes, the mask is not affected)
         :returns: image and mask
         :rtype: (tf.Tensor[float], tf.Tensor[int])
         """
-        if self.resize is not None:
-            rgbi_channels = image[..., :4]
-            ndsm_channel = image[..., 4:]
-            rgbi_channels = tf.image.resize(rgbi_channels,
-                                            size=self.resize,
-                                            method='bilinear')
-            ndsm_channel = tf.image.resize(ndsm_channel,
-                                           size=self.resize,
-                                           method='nearest')
-            ndsm_channel = tf.cast(ndsm_channel, tf.float32)
-            image = tf.concat([rgbi_channels, ndsm_channel], axis=tf.constant(-1))
-
-            mask = tf.image.resize(mask,
-                                   size=self.resize,
-                                   method='nearest')
         image = tf.cast(image, tf.float32) / 255.
         return image, mask
 
@@ -308,6 +321,10 @@ class Pipeline:
             data_options.experimental_distribute.auto_shard_policy = tf.data.experimental.AutoShardPolicy.DATA
             dataset = dataset.with_options(data_options).unbatch()
 
+        if self.resize is not None:
+            dataset = dataset.map(lambda image, mask: self.resize_example(image, mask),
+                                  num_parallel_calls=tf.data.AUTOTUNE)
+
         if self.mode == 'train':
             if self.cache:
                 dataset = dataset.cache()
@@ -315,7 +332,7 @@ class Pipeline:
             dataset = dataset.map(lambda image, mask: self.augment_example(image, mask),
                                   num_parallel_calls=tf.data.AUTOTUNE)
 
-        dataset = dataset.map(lambda image, mask: self.resize_and_normalize_example(image, mask),
+        dataset = dataset.map(lambda image, mask: self.normalize_example(image, mask),
                               num_parallel_calls=tf.data.AUTOTUNE)
 
         dataset = dataset.map(lambda image, mask: self.one_hot_encode_example(image, mask),
