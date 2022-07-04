@@ -1,3 +1,5 @@
+# @author: Maryniak, Marius - Fachbereich Elektrotechnik, Westfälische Hochschule Gelsenkirchen
+
 import json
 import tempfile
 import unittest

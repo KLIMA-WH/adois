@@ -1,3 +1,5 @@
+# @author: Maryniak, Marius - Fachbereich Elektrotechnik, Westfälische Hochschule Gelsenkirchen
+
 import json
 import logging
 import warnings
@@ -33,11 +35,6 @@ warnings.filterwarnings(action='ignore', message='shapes are outside bounds of r
 
 
 class RemoteSensingDataDownloader:
-    """RemoteSensingDataDownloader
-    TODO: class documentation
-
-    Author: Marius Maryniak (marius.maryniak@w-hs.de)
-    """
     VALID_IMAGE_SIZE = (128, 256, 512, 1024, 2048, 4096, 640, 1280, 2560, 5120)
     CHANNELS = 3
 

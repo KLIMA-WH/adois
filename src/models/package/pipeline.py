@@ -1,3 +1,5 @@
+# @author: Maryniak, Marius - Fachbereich Elektrotechnik, Westfälische Hochschule Gelsenkirchen
+
 import json
 import math
 import warnings
@@ -14,11 +16,6 @@ from src.utils.package import utils
 
 
 class Pipeline:
-    """Pipeline
-    TODO: class documentation
-
-    Author: Marius Maryniak (marius.maryniak@w-hs.de)
-    """
     TRAIN_FILE = 'train_ids.json'
     VALIDATE_FILE = 'validate_ids.json'
     SHUFFLE_BUFFER_SIZE = 1000

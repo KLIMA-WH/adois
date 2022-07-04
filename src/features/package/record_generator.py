@@ -1,3 +1,5 @@
+# @author: Maryniak, Marius - Fachbereich Elektrotechnik, Westfälische Hochschule Gelsenkirchen
+
 import json
 import logging
 from datetime import datetime as DateTime  # PEP 8 compliant
@@ -26,11 +28,6 @@ logger.addHandler(console_handler)
 
 
 class RecordGenerator:
-    """RecordGenerator
-    TODO: class documentation
-
-    Author: Marius Maryniak (marius.maryniak@w-hs.de)
-    """
     COLOR_CODES_NDSM = {(0, 0, 0): 0,  # 0.0m - 1.0m
                         (255, 255, 255): 28,  # 1.0m - 1.5m
                         (31, 120, 180): 57,  # 1.5m - 3.0m

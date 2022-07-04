@@ -1,3 +1,5 @@
+# @author: Maryniak, Marius - Fachbereich Elektrotechnik, Westfälische Hochschule Gelsenkirchen
+
 import logging
 from datetime import datetime as DateTime  # PEP 8 compliant
 from pathlib import Path
@@ -28,11 +30,6 @@ logger.addHandler(console_handler)
 
 
 class MaskGenerator:
-    """MaskGenerator
-    TODO: class documentation
-
-    Author: Marius Maryniak (marius.maryniak@w-hs.de)
-    """
     SINGLE_CLASS_MASK_VALUE = 1
     BANDS = 1
 

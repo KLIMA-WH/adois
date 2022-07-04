@@ -1,3 +1,5 @@
+# @author: Maryniak, Marius - Fachbereich Elektrotechnik, Westfälische Hochschule Gelsenkirchen
+
 import warnings
 from pathlib import Path
 
@@ -13,11 +15,6 @@ warnings.filterwarnings(action='ignore', category=FutureWarning)
 
 
 class TileAggregator:
-    """TileAggregator
-    TODO: class documentation
-
-    Author: Marius Maryniak (marius.maryniak@w-hs.de)
-    """
     DECIMAL_PLACES = 4
 
     def __init__(self,
