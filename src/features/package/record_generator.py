@@ -137,7 +137,8 @@ class RecordGenerator:
         :rtype: np.ndarray[int]
         """
         image = np.dot(image, np.array([65536, 256, 1], dtype=np.int32))
-        return self.color_map[image]
+        image = self.color_map[image].astype(np.uint8)
+        return image
 
     def concatenate_images(self,
                            rgb_image,
