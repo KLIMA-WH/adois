@@ -168,7 +168,7 @@ class RecordGenerator:
             ndsm_image = np.expand_dims(ndsm_image, axis=-1)
             images.append(ndsm_image)
 
-        concatenated_image = np.concatenate(tuple(images), axis=-1)
+        concatenated_image = np.concatenate(images, axis=-1)
         return concatenated_image
 
     @staticmethod
