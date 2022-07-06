@@ -135,8 +135,10 @@ dmypy.json
 /src/data/scripts/
 /src/features/scripts/
 /src/models/scripts/
+/src/postprocessing/scripts/
 
 # Log Directories
 /src/data/logs/
 /src/features/logs/
 /src/models/logs/
+/src/postprocessing/logs/
