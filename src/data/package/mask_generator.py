@@ -257,4 +257,4 @@ class MaskGenerator:
             shapes = shapes[~shapes.mask_value.isin(delete)]
 
         (dir_path / shp_name).mkdir(exist_ok=True)
-        shapes.to_file(dir_path / shp_name / f'{shp_name}.shp')
+        shapes.to_file(str(dir_path / shp_name / f'{shp_name}.shp'))
