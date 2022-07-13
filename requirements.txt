@@ -8,3 +8,4 @@ rasterio==1.2.10
 rtree==0.9.7
 Shapely==1.8.1.post1
 tensorflow-addons==0.14.0
+topojson==1.4
