@@ -50,7 +50,7 @@ class Aggregator:
                                             df2=self.masking_shapes,
                                             how='intersection')
 
-        mask_shapes = gpd.read_file(self.mask_shp_path)
+        mask_shapes = gpd.read_file(self.mask_shp_path, bbox=tuple(aggregated_shapes['geometry'].total_bounds))
         mask = gpd.overlay(df1=mask_shapes,
                            df2=aggregated_shapes,
                            how='intersection',
