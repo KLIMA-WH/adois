@@ -96,6 +96,7 @@ class Aggregator:
         schema = {'properties': attributes,
                   'geometry': 'Polygon'}
 
-        aggregated_shapes.to_file(self.mask_shp_path.parents[1] / f'{self.mask_shp_path.parents[0].name}_aggregated' /
-                                  f'{self.mask_shp_path.parents[0].name}_aggregated.shp',
+        aggregated_shapes.to_file(str(self.mask_shp_path.parents[1] /
+                                      f'{self.mask_shp_path.parents[0].name}_aggregated' /
+                                      f'{self.mask_shp_path.parents[0].name}_aggregated.shp'),
                                   schema=schema)
