@@ -294,8 +294,8 @@ class RecordGenerator:
                 _, mask_id, mask_coordinates = utils.get_image_metadata(masks[index])
                 image_ids.append(mask_id)
                 coordinates.append(mask_coordinates)
-                if all(image_id == image_ids[0] for image_id in image_ids) and \
-                        all(coordinate == coordinates[0] for coordinate in coordinates):
+                if (all(image_id == image_ids[0] for image_id in image_ids) and
+                        all(coordinate == coordinates[0] for coordinate in coordinates)):
                     if self.skip is None or self.skip is not None and index in valid_image_ids:
                         with Image.open(self.rgb_dir_path / rgb_images[index]) as file:
                             # noinspection PyTypeChecker
