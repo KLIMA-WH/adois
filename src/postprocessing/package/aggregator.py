@@ -1,25 +1,9 @@
 # @author: Maryniak, Marius - Fachbereich Elektrotechnik, Westfälische Hochschule Gelsenkirchen
 
-import logging
 from collections import OrderedDict
-from datetime import datetime as DateTime  # PEP 8 compliant
 from pathlib import Path
 
 import geopandas as gpd
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-logger_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s: %(message)s')
-
-log_dir_path = Path(__file__).parents[1] / 'logs'
-date_time = str(DateTime.now().isoformat(sep='_', timespec='seconds')).replace(':', '-')
-file_handler = logging.FileHandler(log_dir_path / f'{date_time}_aggregator.log', mode='w')
-file_handler.setFormatter(logger_formatter)
-logger.addHandler(file_handler)
-
-console_handler = logging.StreamHandler()
-console_handler.setFormatter(logger_formatter)
-logger.addHandler(console_handler)
 
 
 class Aggregator:
@@ -60,31 +44,25 @@ class Aggregator:
         :rtype: None
         """
         aggregated_shapes = gpd.read_file(self.aggregated_shp_path)
-        aggregated_shapes = aggregated_shapes[['geometry']]
-        iterations = len(aggregated_shapes)
-        logger_padding_length = len(str(len(aggregated_shapes)))
 
-        for index in aggregated_shapes.index:
-            polygon = gpd.GeoDataFrame(geometry=[aggregated_shapes.geometry.iloc[index]],
-                                       crs=f'epsg:{self.epsg_code}')
+        if self.masking_shapes is not None:
+            aggregated_shapes = gpd.overlay(df1=aggregated_shapes,
+                                            df2=self.masking_shapes,
+                                            how='intersection')
 
-            if self.masking_shapes is not None:
-                polygon = gpd.overlay(df1=polygon,
-                                      df2=self.masking_shapes,
-                                      how='intersection')
+        mask_shapes = gpd.read_file(self.mask_shp_path)
+        mask = gpd.overlay(df1=mask_shapes,
+                           df2=aggregated_shapes,
+                           how='intersection',
+                           keep_geom_type=False)
 
-            mask_shapes = gpd.read_file(self.mask_shp_path, mask=polygon)
-            mask = gpd.overlay(df1=mask_shapes,
-                               df2=polygon,
-                               how='intersection',
-                               keep_geom_type=False)
-
-            area = float(polygon.area)
-            imp_area = float(mask.area.sum())
+        for index in aggregated_shapes['FID']:
+            area = float(aggregated_shapes.loc[aggregated_shapes['FID'] == index].area)
+            imp_area = float(mask.loc[mask['FID'] == index].area.sum())
             imp_density = imp_area / area
-            bui_area = float(mask.loc[mask['class'] == 1].area.sum())
+            bui_area = float(mask.loc[(mask['FID'] == index) & (mask['class'] == 1)].area.sum())
             bui_density = bui_area / area
-            sur_area = float(mask.loc[mask['class'] == 2].area.sum())
+            sur_area = float(mask.loc[(mask['FID'] == index) & (mask['class'] == 2)].area.sum())
             sur_density = sur_area / area
 
             if round(imp_area, 4) != 0:
@@ -103,9 +81,9 @@ class Aggregator:
             aggregated_shapes.at[index, 'sur_dens'] = sur_density
             aggregated_shapes.at[index, 'bui_imp_r'] = bui_imp_ratio
             aggregated_shapes.at[index, 'sur_imp_r'] = sur_imp_ratio
-            logger.info(f'iteration {index + 1:>{logger_padding_length}} / {iterations}')
 
         attributes = OrderedDict()
+        attributes['FID'] = 'int:10'
         attributes['area'] = f'float:10.{Aggregator.DECIMAL_PLACES}'
         attributes['imp_area'] = f'float:10.{Aggregator.DECIMAL_PLACES}'
         attributes['imp_dens'] = f'float:10.{Aggregator.DECIMAL_PLACES}'
