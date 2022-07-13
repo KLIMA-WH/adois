@@ -229,7 +229,7 @@ class MaskGenerator:
                             column,
                             replace,
                             delete=None):
-        """Preprocesses a shape file.
+        """Exports a preprocessed shape file.
 
         :param str or Path dir_path: path to the directory
         :param str shp_name: name of the shape file
