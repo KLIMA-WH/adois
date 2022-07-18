@@ -37,7 +37,7 @@ class Aggregator:
         (self.mask_shp_path.parents[1] / f'{self.mask_shp_path.parents[0].name}_aggregated').mkdir(exist_ok=True)
 
     def __call__(self):
-        """Exports a aggregated shape file with the following attributes for each polygon:
+        """Exports an aggregated shape file with the following attributes for each polygon:
         'area', 'imp_area', 'imp_dens', 'bui_area', 'bui_dens', 'sur_area', 'sur_dens', 'bui_imp_r', 'sur_imp_r'
 
         :returns: None

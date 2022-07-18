@@ -109,7 +109,7 @@ class Pipeline:
     def parse_record(self, record):
         """Returns an image and the corresponding mask from a parsed record.
 
-        :param tf.Tensor[str] record: record (scalar string tensor of an single serialized example)
+        :param tf.Tensor[str] record: record (scalar string tensor of a single serialized example)
         :returns: image and mask
         :rtype: (tf.Tensor[int], tf.Tensor[int])
         """
@@ -186,7 +186,7 @@ class Pipeline:
     def resize_example(self,
                        image,
                        mask):
-        """Returns an resized image and the corresponding resized mask.
+        """Returns a resized image and the corresponding resized mask.
 
         :param tf.Tensor[int] image: image
         :param tf.Tensor[int] mask: mask
@@ -269,7 +269,7 @@ class Pipeline:
     def normalize_example(self,
                           image,
                           mask):
-        """Returns an normalized image and the corresponding normalized mask.
+        """Returns a normalized image and the corresponding normalized mask.
 
         :param tf.Tensor[int] image: image
         :param tf.Tensor[int] mask: mask (for mapping purposes, the mask is not affected)

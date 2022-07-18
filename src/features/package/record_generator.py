@@ -116,7 +116,7 @@ class RecordGenerator:
         return color_map
 
     def resize_image(self, image):
-        """Returns an resized image. Used for manually upsampling or downsampling images to an image size without
+        """Returns a resized image. Used for manually upsampling or downsampling images to an image size without
         interpolation artefacts (nearest-neighbor interpolation is used).
 
         :param np.ndarray[int] image: image
@@ -129,7 +129,7 @@ class RecordGenerator:
         return resized_image
 
     def reduce_dimensions(self, image):
-        """Returns an color mapped image with reduced dimensions (2 dimensions instead of 3 dimensions).
+        """Returns a color mapped image with reduced dimensions (2 dimensions instead of 3 dimensions).
         Based on: https://stackoverflow.com/a/33196320
 
         :param np.ndarray[int] image: image
@@ -144,7 +144,7 @@ class RecordGenerator:
                            rgb_image,
                            nir_image=None,
                            ndsm_image=None):
-        """Returns an concatenated image of the rgb image, the nir image and the ndsm image.
+        """Returns a concatenated image of the rgb image, the nir image and the ndsm image.
 
         :param np.ndarray[int] rgb_image: rgb image
         :param np.ndarray[int] or None nir_image: nir image
